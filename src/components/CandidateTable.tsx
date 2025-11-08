@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { format } from "date-fns";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, Search, ArrowUpDown } from "lucide-react";
+import { toast } from "sonner";
 import {
   Table,
   TableBody,
@@ -27,6 +28,15 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { CandidateForm, CandidateFormData } from "./CandidateForm";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 
 export interface Candidate extends CandidateFormData {
   id: string;
@@ -38,6 +48,9 @@ interface CandidateTableProps {
   onDelete: (id: string) => void;
 }
 
+type SortField = "name" | "email" | "registrationDate" | "status";
+type SortOrder = "asc" | "desc";
+
 export const CandidateTable = ({
   candidates,
   onEdit,
@@ -45,6 +58,82 @@ export const CandidateTable = ({
 }: CandidateTableProps) => {
   const [editingCandidate, setEditingCandidate] = useState<Candidate | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [areaFilter, setAreaFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [sortField, setSortField] = useState<SortField>("registrationDate");
+  const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
+
+  const getStatusVariant = (status: string) => {
+    switch (status) {
+      case "Novo":
+        return "default";
+      case "Em Análise":
+        return "secondary";
+      case "Entrevista Agendada":
+        return "outline";
+      case "Aprovado":
+        return "default";
+      case "Rejeitado":
+        return "destructive";
+      default:
+        return "default";
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "Novo":
+        return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200";
+      case "Em Análise":
+        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200";
+      case "Entrevista Agendada":
+        return "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200";
+      case "Aprovado":
+        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
+      case "Rejeitado":
+        return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200";
+      default:
+        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200";
+    }
+  };
+
+  const filteredAndSortedCandidates = useMemo(() => {
+    let filtered = candidates.filter((candidate) => {
+      const matchesSearch =
+        candidate.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        candidate.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        candidate.phone.includes(searchQuery);
+
+      const matchesArea = areaFilter === "all" || candidate.area === areaFilter;
+      const matchesStatus = statusFilter === "all" || candidate.status === statusFilter;
+
+      return matchesSearch && matchesArea && matchesStatus;
+    });
+
+    filtered.sort((a, b) => {
+      let comparison = 0;
+      
+      if (sortField === "registrationDate") {
+        comparison = new Date(a.registrationDate).getTime() - new Date(b.registrationDate).getTime();
+      } else if (sortField === "name" || sortField === "email" || sortField === "status") {
+        comparison = a[sortField].localeCompare(b[sortField]);
+      }
+
+      return sortOrder === "asc" ? comparison : -comparison;
+    });
+
+    return filtered;
+  }, [candidates, searchQuery, areaFilter, statusFilter, sortField, sortOrder]);
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortOrder("asc");
+    }
+  };
 
   const handleEdit = (data: CandidateFormData) => {
     if (editingCandidate) {
@@ -57,6 +146,7 @@ export const CandidateTable = ({
     if (deletingId) {
       onDelete(deletingId);
       setDeletingId(null);
+      toast.success("Candidato excluído com sucesso!");
     }
   };
 
@@ -71,55 +161,152 @@ export const CandidateTable = ({
 
   return (
     <>
-      <div className="rounded-md border bg-card overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Nome Completo</TableHead>
-              <TableHead>E-mail</TableHead>
-              <TableHead>Telefone</TableHead>
-              <TableHead>Área de Interesse</TableHead>
-              <TableHead>Data de Cadastro</TableHead>
-              <TableHead className="text-right">Ações</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {candidates.map((candidate) => (
-              <TableRow key={candidate.id}>
-                <TableCell className="font-medium">{candidate.name}</TableCell>
-                <TableCell>{candidate.email}</TableCell>
-                <TableCell>{candidate.phone}</TableCell>
-                <TableCell>
-                  <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-primary/10 text-primary">
-                    {candidate.area}
-                  </span>
-                </TableCell>
-                <TableCell>{format(candidate.registrationDate, "dd/MM/yyyy")}</TableCell>
-                <TableCell className="text-right">
-                  <div className="flex justify-end gap-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setEditingCandidate(candidate)}
-                      className="h-8 w-8"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setDeletingId(candidate.id)}
-                      className="h-8 w-8 text-destructive hover:text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+      <div className="space-y-4 mb-4">
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Pesquisar por nome, e-mail ou telefone..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          <Select value={areaFilter} onValueChange={setAreaFilter}>
+            <SelectTrigger className="w-full sm:w-[200px]">
+              <SelectValue placeholder="Filtrar por área" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas as áreas</SelectItem>
+              <SelectItem value="Tecnologia">Tecnologia</SelectItem>
+              <SelectItem value="Marketing">Marketing</SelectItem>
+              <SelectItem value="Vendas">Vendas</SelectItem>
+              <SelectItem value="Recursos Humanos">Recursos Humanos</SelectItem>
+              <SelectItem value="Design">Design</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-full sm:w-[200px]">
+              <SelectValue placeholder="Filtrar por status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os status</SelectItem>
+              <SelectItem value="Novo">Novo</SelectItem>
+              <SelectItem value="Em Análise">Em Análise</SelectItem>
+              <SelectItem value="Entrevista Agendada">Entrevista Agendada</SelectItem>
+              <SelectItem value="Aprovado">Aprovado</SelectItem>
+              <SelectItem value="Rejeitado">Rejeitado</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        {filteredAndSortedCandidates.length > 0 && (
+          <p className="text-sm text-muted-foreground">
+            Mostrando {filteredAndSortedCandidates.length} de {candidates.length} candidato{candidates.length !== 1 ? "s" : ""}
+          </p>
+        )}
       </div>
+
+      {filteredAndSortedCandidates.length === 0 ? (
+        <div className="text-center py-12 text-muted-foreground border rounded-md">
+          <p>Nenhum candidato encontrado com os filtros aplicados.</p>
+        </div>
+      ) : (
+        <div className="rounded-md border bg-card overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleSort("name")}
+                    className="hover:bg-transparent"
+                  >
+                    Nome Completo
+                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                  </Button>
+                </TableHead>
+                <TableHead>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleSort("email")}
+                    className="hover:bg-transparent"
+                  >
+                    E-mail
+                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                  </Button>
+                </TableHead>
+                <TableHead>Telefone</TableHead>
+                <TableHead>Área de Interesse</TableHead>
+                <TableHead>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleSort("status")}
+                    className="hover:bg-transparent"
+                  >
+                    Status
+                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                  </Button>
+                </TableHead>
+                <TableHead>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleSort("registrationDate")}
+                    className="hover:bg-transparent"
+                  >
+                    Data de Cadastro
+                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                  </Button>
+                </TableHead>
+                <TableHead className="text-right">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredAndSortedCandidates.map((candidate) => (
+                <TableRow key={candidate.id}>
+                  <TableCell className="font-medium">{candidate.name}</TableCell>
+                  <TableCell>{candidate.email}</TableCell>
+                  <TableCell>{candidate.phone}</TableCell>
+                  <TableCell>
+                    <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-primary/10 text-primary">
+                      {candidate.area}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={getStatusVariant(candidate.status)} className={getStatusColor(candidate.status)}>
+                      {candidate.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>{format(candidate.registrationDate, "dd/MM/yyyy")}</TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setEditingCandidate(candidate)}
+                        className="h-8 w-8"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setDeletingId(candidate.id)}
+                        className="h-8 w-8 text-destructive hover:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
 
       <Dialog open={!!editingCandidate} onOpenChange={() => setEditingCandidate(null)}>
         <DialogContent className="sm:max-w-[500px]">
@@ -131,6 +318,8 @@ export const CandidateTable = ({
               onSubmit={handleEdit}
               defaultValues={editingCandidate}
               submitButtonText="Atualizar Candidato"
+              existingEmails={candidates.map(c => c.email)}
+              currentEmail={editingCandidate.email}
             />
           )}
         </DialogContent>

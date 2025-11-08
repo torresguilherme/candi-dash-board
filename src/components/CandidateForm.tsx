@@ -35,6 +35,7 @@ const candidateSchema = z.object({
   phone: z.string().min(10, { message: "Telefone inválido" }),
   area: z.string().min(1, { message: "Selecione uma área de interesse" }),
   registrationDate: z.date({ required_error: "Selecione a data de cadastro" }),
+  status: z.string().min(1, { message: "Selecione um status" }),
 });
 
 export type CandidateFormData = z.infer<typeof candidateSchema>;
@@ -43,12 +44,16 @@ interface CandidateFormProps {
   onSubmit: (data: CandidateFormData) => void;
   defaultValues?: Partial<CandidateFormData>;
   submitButtonText?: string;
+  existingEmails?: string[];
+  currentEmail?: string;
 }
 
 export const CandidateForm = ({
   onSubmit,
   defaultValues,
   submitButtonText = "Salvar Candidato",
+  existingEmails = [],
+  currentEmail,
 }: CandidateFormProps) => {
   const form = useForm<CandidateFormData>({
     resolver: zodResolver(candidateSchema),
@@ -58,10 +63,25 @@ export const CandidateForm = ({
       phone: "",
       area: "",
       registrationDate: new Date(),
+      status: "Novo",
     },
   });
 
+  const formatPhoneNumber = (value: string) => {
+    const numbers = value.replace(/\D/g, "");
+    if (numbers.length <= 10) {
+      return numbers.replace(/(\d{2})(\d{4})(\d{0,4})/, "($1) $2-$3");
+    }
+    return numbers.replace(/(\d{2})(\d{5})(\d{0,4})/, "($1) $2-$3");
+  };
+
   const handleSubmit = (data: CandidateFormData) => {
+    // Verificar email duplicado
+    if (existingEmails.includes(data.email.toLowerCase()) && data.email.toLowerCase() !== currentEmail?.toLowerCase()) {
+      toast.error("Este e-mail já está cadastrado!");
+      return;
+    }
+    
     onSubmit(data);
     if (!defaultValues) {
       form.reset();
@@ -109,7 +129,16 @@ export const CandidateForm = ({
             <FormItem>
               <FormLabel>Telefone</FormLabel>
               <FormControl>
-                <Input type="tel" placeholder="(00) 00000-0000" {...field} />
+                <Input 
+                  type="tel" 
+                  placeholder="(00) 00000-0000" 
+                  {...field}
+                  onChange={(e) => {
+                    const formatted = formatPhoneNumber(e.target.value);
+                    field.onChange(formatted);
+                  }}
+                  maxLength={15}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -134,6 +163,31 @@ export const CandidateForm = ({
                   <SelectItem value="Vendas">Vendas</SelectItem>
                   <SelectItem value="Recursos Humanos">Recursos Humanos</SelectItem>
                   <SelectItem value="Design">Design</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="status"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Status</FormLabel>
+              <Select onValueChange={field.onChange} value={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um status" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="Novo">Novo</SelectItem>
+                  <SelectItem value="Em Análise">Em Análise</SelectItem>
+                  <SelectItem value="Entrevista Agendada">Entrevista Agendada</SelectItem>
+                  <SelectItem value="Aprovado">Aprovado</SelectItem>
+                  <SelectItem value="Rejeitado">Rejeitado</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />

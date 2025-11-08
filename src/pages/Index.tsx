@@ -57,7 +57,10 @@ const Index = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <CandidateForm onSubmit={handleAddCandidate} />
+              <CandidateForm 
+                onSubmit={handleAddCandidate} 
+                existingEmails={candidates.map(c => c.email)}
+              />
             </CardContent>
           </Card>
 
