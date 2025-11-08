@@ -211,83 +211,84 @@ export const CandidateTable = ({
           <p>Nenhum candidato encontrado com os filtros aplicados.</p>
         </div>
       ) : (
-        <div className="rounded-md border bg-card overflow-hidden">
+        <div className="rounded-lg border bg-card overflow-hidden shadow-sm">
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead>
+              <TableRow className="bg-muted/50 hover:bg-muted/50">
+                <TableHead className="h-14">
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => handleSort("name")}
-                    className="hover:bg-transparent"
+                    className="hover:bg-transparent font-semibold"
                   >
                     Nome Completo
                     <ArrowUpDown className="ml-2 h-4 w-4" />
                   </Button>
                 </TableHead>
-                <TableHead>
+                <TableHead className="h-14">
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => handleSort("email")}
-                    className="hover:bg-transparent"
+                    className="hover:bg-transparent font-semibold"
                   >
                     E-mail
                     <ArrowUpDown className="ml-2 h-4 w-4" />
                   </Button>
                 </TableHead>
-                <TableHead>Telefone</TableHead>
-                <TableHead>Área de Interesse</TableHead>
-                <TableHead>
+                <TableHead className="h-14 font-semibold">Telefone</TableHead>
+                <TableHead className="h-14 font-semibold">Área de Interesse</TableHead>
+                <TableHead className="h-14">
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => handleSort("status")}
-                    className="hover:bg-transparent"
+                    className="hover:bg-transparent font-semibold"
                   >
                     Status
                     <ArrowUpDown className="ml-2 h-4 w-4" />
                   </Button>
                 </TableHead>
-                <TableHead>
+                <TableHead className="h-14">
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => handleSort("registrationDate")}
-                    className="hover:bg-transparent"
+                    className="hover:bg-transparent font-semibold"
                   >
                     Data de Cadastro
                     <ArrowUpDown className="ml-2 h-4 w-4" />
                   </Button>
                 </TableHead>
-                <TableHead className="text-right">Ações</TableHead>
+                <TableHead className="text-right h-14 font-semibold">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredAndSortedCandidates.map((candidate) => (
-                <TableRow key={candidate.id}>
-                  <TableCell className="font-medium">{candidate.name}</TableCell>
-                  <TableCell>{candidate.email}</TableCell>
-                  <TableCell>{candidate.phone}</TableCell>
-                  <TableCell>
-                    <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-primary/10 text-primary">
+                <TableRow key={candidate.id} className="hover:bg-muted/30 transition-colors">
+                  <TableCell className="font-medium py-5">{candidate.name}</TableCell>
+                  <TableCell className="py-5 text-muted-foreground">{candidate.email}</TableCell>
+                  <TableCell className="py-5 text-muted-foreground">{candidate.phone}</TableCell>
+                  <TableCell className="py-5">
+                    <span className="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium bg-primary/10 text-primary">
                       {candidate.area}
                     </span>
                   </TableCell>
-                  <TableCell>
-                    <Badge variant={getStatusVariant(candidate.status)} className={getStatusColor(candidate.status)}>
+                  <TableCell className="py-5">
+                    <Badge variant={getStatusVariant(candidate.status)} className={`${getStatusColor(candidate.status)} font-medium`}>
                       {candidate.status}
                     </Badge>
                   </TableCell>
-                  <TableCell>{format(candidate.registrationDate, "dd/MM/yyyy")}</TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="py-5 text-muted-foreground">{format(candidate.registrationDate, "dd/MM/yyyy")}</TableCell>
+                  <TableCell className="text-right py-5">
                     <div className="flex justify-end gap-2">
                       <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => setEditingCandidate(candidate)}
-                        className="h-8 w-8"
+                        className="h-9 w-9 hover:bg-primary/10 hover:text-primary transition-colors"
+                        title="Editar candidato"
                       >
                         <Pencil className="h-4 w-4" />
                       </Button>
@@ -295,7 +296,8 @@ export const CandidateTable = ({
                         variant="ghost"
                         size="icon"
                         onClick={() => setDeletingId(candidate.id)}
-                        className="h-8 w-8 text-destructive hover:text-destructive"
+                        className="h-9 w-9 text-destructive hover:bg-destructive/10 hover:text-destructive transition-colors"
+                        title="Excluir candidato"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
