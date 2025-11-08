@@ -235,25 +235,25 @@ export const CandidateTable = ({
                 </TableHead>
                 <TableHead className="h-14 font-semibold whitespace-nowrap">Telefone</TableHead>
                 <TableHead className="h-14 font-semibold whitespace-nowrap">Área de Interesse</TableHead>
-                <TableHead className="h-14 whitespace-nowrap">
+                <TableHead className="h-14 whitespace-nowrap text-center">
                   <button
                     onClick={() => handleSort("status")}
-                    className="flex items-center font-semibold hover:text-foreground transition-colors"
+                    className="flex items-center justify-center font-semibold hover:text-foreground transition-colors w-full"
                   >
                     Status
                     <ArrowUpDown className="ml-2 h-4 w-4" />
                   </button>
                 </TableHead>
-                <TableHead className="h-14 whitespace-nowrap">
+                <TableHead className="h-14 whitespace-nowrap text-center">
                   <button
                     onClick={() => handleSort("registrationDate")}
-                    className="flex items-center font-semibold hover:text-foreground transition-colors"
+                    className="flex items-center justify-center font-semibold hover:text-foreground transition-colors w-full"
                   >
                     Data de Cadastro
                     <ArrowUpDown className="ml-2 h-4 w-4" />
                   </button>
                 </TableHead>
-                <TableHead className="text-right h-14 font-semibold whitespace-nowrap">Ações</TableHead>
+                <TableHead className="text-center h-14 font-semibold whitespace-nowrap">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -267,14 +267,14 @@ export const CandidateTable = ({
                       {candidate.area}
                     </span>
                   </TableCell>
-                  <TableCell className="py-5 whitespace-nowrap">
+                  <TableCell className="py-5 whitespace-nowrap text-center">
                     <Badge variant={getStatusVariant(candidate.status)} className={`${getStatusColor(candidate.status)} font-medium whitespace-nowrap`}>
                       {candidate.status}
                     </Badge>
                   </TableCell>
-                  <TableCell className="py-5 text-muted-foreground whitespace-nowrap">{format(candidate.registrationDate, "dd/MM/yyyy")}</TableCell>
-                  <TableCell className="text-right py-5 whitespace-nowrap">
-                    <div className="flex justify-end gap-2">
+                  <TableCell className="py-5 text-muted-foreground whitespace-nowrap text-center">{format(candidate.registrationDate, "dd/MM/yyyy")}</TableCell>
+                  <TableCell className="text-center py-5 whitespace-nowrap">
+                    <div className="flex justify-center gap-2">
                       <Button
                         variant="ghost"
                         size="icon"
