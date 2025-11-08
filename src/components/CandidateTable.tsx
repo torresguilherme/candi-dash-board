@@ -215,73 +215,65 @@ export const CandidateTable = ({
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/50 hover:bg-muted/50">
-                <TableHead className="h-14">
-                  <Button
-                    variant="ghost"
-                    size="sm"
+                <TableHead className="h-14 whitespace-nowrap">
+                  <button
                     onClick={() => handleSort("name")}
-                    className="hover:bg-transparent font-semibold"
+                    className="flex items-center font-semibold hover:text-foreground transition-colors"
                   >
                     Nome Completo
                     <ArrowUpDown className="ml-2 h-4 w-4" />
-                  </Button>
+                  </button>
                 </TableHead>
-                <TableHead className="h-14">
-                  <Button
-                    variant="ghost"
-                    size="sm"
+                <TableHead className="h-14 whitespace-nowrap">
+                  <button
                     onClick={() => handleSort("email")}
-                    className="hover:bg-transparent font-semibold"
+                    className="flex items-center font-semibold hover:text-foreground transition-colors"
                   >
                     E-mail
                     <ArrowUpDown className="ml-2 h-4 w-4" />
-                  </Button>
+                  </button>
                 </TableHead>
-                <TableHead className="h-14 font-semibold">Telefone</TableHead>
-                <TableHead className="h-14 font-semibold">Área de Interesse</TableHead>
-                <TableHead className="h-14">
-                  <Button
-                    variant="ghost"
-                    size="sm"
+                <TableHead className="h-14 font-semibold whitespace-nowrap">Telefone</TableHead>
+                <TableHead className="h-14 font-semibold whitespace-nowrap">Área de Interesse</TableHead>
+                <TableHead className="h-14 whitespace-nowrap">
+                  <button
                     onClick={() => handleSort("status")}
-                    className="hover:bg-transparent font-semibold"
+                    className="flex items-center font-semibold hover:text-foreground transition-colors"
                   >
                     Status
                     <ArrowUpDown className="ml-2 h-4 w-4" />
-                  </Button>
+                  </button>
                 </TableHead>
-                <TableHead className="h-14">
-                  <Button
-                    variant="ghost"
-                    size="sm"
+                <TableHead className="h-14 whitespace-nowrap">
+                  <button
                     onClick={() => handleSort("registrationDate")}
-                    className="hover:bg-transparent font-semibold"
+                    className="flex items-center font-semibold hover:text-foreground transition-colors"
                   >
                     Data de Cadastro
                     <ArrowUpDown className="ml-2 h-4 w-4" />
-                  </Button>
+                  </button>
                 </TableHead>
-                <TableHead className="text-right h-14 font-semibold">Ações</TableHead>
+                <TableHead className="text-right h-14 font-semibold whitespace-nowrap">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredAndSortedCandidates.map((candidate) => (
                 <TableRow key={candidate.id} className="hover:bg-muted/30 transition-colors">
-                  <TableCell className="font-medium py-5">{candidate.name}</TableCell>
-                  <TableCell className="py-5 text-muted-foreground">{candidate.email}</TableCell>
-                  <TableCell className="py-5 text-muted-foreground">{candidate.phone}</TableCell>
-                  <TableCell className="py-5">
-                    <span className="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium bg-primary/10 text-primary">
+                  <TableCell className="font-medium py-5 whitespace-nowrap">{candidate.name}</TableCell>
+                  <TableCell className="py-5 text-muted-foreground whitespace-nowrap">{candidate.email}</TableCell>
+                  <TableCell className="py-5 text-muted-foreground whitespace-nowrap">{candidate.phone}</TableCell>
+                  <TableCell className="py-5 whitespace-nowrap">
+                    <span className="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium bg-primary/10 text-primary whitespace-nowrap">
                       {candidate.area}
                     </span>
                   </TableCell>
-                  <TableCell className="py-5">
-                    <Badge variant={getStatusVariant(candidate.status)} className={`${getStatusColor(candidate.status)} font-medium`}>
+                  <TableCell className="py-5 whitespace-nowrap">
+                    <Badge variant={getStatusVariant(candidate.status)} className={`${getStatusColor(candidate.status)} font-medium whitespace-nowrap`}>
                       {candidate.status}
                     </Badge>
                   </TableCell>
-                  <TableCell className="py-5 text-muted-foreground">{format(candidate.registrationDate, "dd/MM/yyyy")}</TableCell>
-                  <TableCell className="text-right py-5">
+                  <TableCell className="py-5 text-muted-foreground whitespace-nowrap">{format(candidate.registrationDate, "dd/MM/yyyy")}</TableCell>
+                  <TableCell className="text-right py-5 whitespace-nowrap">
                     <div className="flex justify-end gap-2">
                       <Button
                         variant="ghost"
