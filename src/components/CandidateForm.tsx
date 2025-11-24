@@ -36,6 +36,8 @@ const candidateSchema = z.object({
   area: z.string().min(1, { message: "Selecione uma área de interesse" }),
   registrationDate: z.date({ required_error: "Selecione a data de cadastro" }),
   status: z.string().min(1, { message: "Selecione um status" }),
+  city: z.string().min(2, { message: "Cidade é obrigatória (mín. 2 caracteres)" }),
+  resume: z.any().optional(),
 });
 
 export type CandidateFormData = z.infer<typeof candidateSchema>;
@@ -64,6 +66,7 @@ export const CandidateForm = ({
       area: "",
       registrationDate: new Date(),
       status: "Novo",
+      city: "",
     },
   });
 
@@ -190,6 +193,42 @@ export const CandidateForm = ({
                   <SelectItem value="Rejeitado">Rejeitado</SelectItem>
                 </SelectContent>
               </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="city"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Cidade</FormLabel>
+              <FormControl>
+                <Input placeholder="Digite a cidade" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="resume"
+          render={({ field: { onChange, value, ...field } }) => (
+            <FormItem>
+              <FormLabel>Currículo (PDF)</FormLabel>
+              <FormControl>
+                <Input
+                  type="file"
+                  accept=".pdf"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    onChange(file);
+                  }}
+                  {...field}
+                />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}

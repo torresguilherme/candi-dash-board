@@ -235,9 +235,10 @@ export const CandidateTable = ({
                       <ArrowUpDown className="ml-2 h-4 w-4" />
                     </button>
                   </TableHead>
-                  <TableHead className="h-14 font-semibold whitespace-nowrap">Telefone</TableHead>
-                  <TableHead className="h-14 font-semibold whitespace-nowrap">Área de Interesse</TableHead>
-                  <TableHead className="h-14 whitespace-nowrap text-center">
+                   <TableHead className="h-14 font-semibold whitespace-nowrap">Telefone</TableHead>
+                   <TableHead className="h-14 font-semibold whitespace-nowrap">Área de Interesse</TableHead>
+                   <TableHead className="h-14 font-semibold whitespace-nowrap">Cidade</TableHead>
+                   <TableHead className="h-14 whitespace-nowrap text-center">
                     <button
                       onClick={() => handleSort("status")}
                       className="flex items-center justify-center font-semibold hover:text-foreground transition-colors w-full"
@@ -264,11 +265,12 @@ export const CandidateTable = ({
                     <TableCell className="font-medium py-5 whitespace-nowrap">{candidate.name}</TableCell>
                     <TableCell className="py-5 text-muted-foreground whitespace-nowrap">{candidate.email}</TableCell>
                     <TableCell className="py-5 text-muted-foreground whitespace-nowrap">{candidate.phone}</TableCell>
-                    <TableCell className="py-5 whitespace-nowrap">
-                      <span className="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium bg-primary/10 text-primary whitespace-nowrap">
-                        {candidate.area}
-                      </span>
-                    </TableCell>
+                     <TableCell className="py-5 whitespace-nowrap">
+                       <span className="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium bg-primary/10 text-primary whitespace-nowrap">
+                         {candidate.area}
+                       </span>
+                     </TableCell>
+                     <TableCell className="py-5 text-muted-foreground whitespace-nowrap">{(candidate as any).city || '-'}</TableCell>
                     <TableCell className="py-5 whitespace-nowrap text-center">
                       <Badge variant={getStatusVariant(candidate.status)} className={`${getStatusColor(candidate.status)} font-medium whitespace-nowrap`}>
                         {candidate.status}
@@ -325,12 +327,16 @@ export const CandidateTable = ({
                     <span className="text-muted-foreground">Telefone:</span>
                     <span className="font-medium">{candidate.phone}</span>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">Área:</span>
-                    <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-primary/10 text-primary">
-                      {candidate.area}
-                    </span>
-                  </div>
+                   <div className="flex justify-between items-center">
+                     <span className="text-muted-foreground">Área:</span>
+                     <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-primary/10 text-primary">
+                       {candidate.area}
+                     </span>
+                   </div>
+                   <div className="flex justify-between items-center">
+                     <span className="text-muted-foreground">Cidade:</span>
+                     <span className="font-medium">{(candidate as any).city || '-'}</span>
+                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-muted-foreground">Cadastro:</span>
                     <span className="font-medium">{format(candidate.registrationDate, "dd/MM/yyyy")}</span>
