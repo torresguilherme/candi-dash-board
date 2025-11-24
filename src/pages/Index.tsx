@@ -87,7 +87,7 @@ const Index = () => {
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        <Card className="max-w-2xl lg:max-w-4xl xl:max-w-5xl">
+        <Card>
           <CardHeader>
             <CardTitle>Cadastrar Candidatura</CardTitle>
             <CardDescription>
