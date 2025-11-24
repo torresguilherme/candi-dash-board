@@ -53,6 +53,30 @@ const Index = () => {
 
       if (error) throw error;
 
+      // Send data to webhook
+      try {
+        await fetch('https://n8n.neurogrid.com.br/webhook-test/lrb', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            id: candidateId,
+            name: data.name,
+            email: data.email,
+            phone: data.phone,
+            area: data.area,
+            city: data.city,
+            linkedin_url: data.linkedin_url || null,
+            resume_url: resumeUrl,
+            registration_date: new Date().toISOString(),
+          }),
+        });
+      } catch (webhookError) {
+        console.error('Error sending to webhook:', webhookError);
+        // Don't throw - we don't want to fail the submission if webhook fails
+      }
+
       toast({
         title: "Candidatura enviada com sucesso!",
         description: "Entraremos em contato em breve.",
