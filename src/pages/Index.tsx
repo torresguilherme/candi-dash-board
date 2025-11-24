@@ -79,15 +79,15 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b bg-card shadow-sm">
-        <div className="container mx-auto px-4 py-6">
+        <div className="container mx-auto px-4 py-3">
           <div className="flex items-center gap-3">
-            <img src={logo} alt="LRB Assessoria" className="h-12" />
+            <img src={logo} alt="LRB Assessoria" className="h-10" />
           </div>
         </div>
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        <div className="max-w-2xl mx-auto">
+        <div className="max-w-2xl lg:max-w-4xl xl:max-w-5xl mx-auto">
           <Card>
             <CardHeader>
               <CardTitle>Cadastrar Candidatura</CardTitle>
