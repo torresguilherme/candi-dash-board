@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { CandidateForm, CandidateFormData } from "@/components/CandidateForm";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,7 +8,6 @@ import { Users, LogIn } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
-  const { user } = useAuth();
   const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -43,13 +41,14 @@ const Index = () => {
         resumeUrl = await uploadResume(data.resume, candidateId);
       }
 
-      // For public submissions, we need to use a service role or allow anonymous inserts
-      // For now, we'll require authentication
+      // Public UUID for non-authenticated submissions
+      const publicUserId = '00000000-0000-0000-0000-000000000000';
+
       const { error } = await supabase
         .from('candidates')
         .insert({
           id: candidateId,
-          user_id: user?.id || '00000000-0000-0000-0000-000000000000',
+          user_id: publicUserId,
           name: data.name,
           email: data.email,
           phone: data.phone,
