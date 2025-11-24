@@ -53,10 +53,8 @@ const Index = () => {
           email: data.email,
           phone: data.phone,
           area: data.area,
-          status: data.status,
           city: data.city,
           resume_url: resumeUrl,
-          registration_date: data.registrationDate.toISOString().split('T')[0],
         });
 
       if (error) throw error;

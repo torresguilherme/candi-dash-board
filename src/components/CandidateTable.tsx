@@ -40,6 +40,8 @@ import { Badge } from "@/components/ui/badge";
 
 export interface Candidate extends CandidateFormData {
   id: string;
+  status?: string;
+  registrationDate?: Date;
 }
 
 interface CandidateTableProps {
@@ -48,7 +50,7 @@ interface CandidateTableProps {
   onDelete: (id: string) => void;
 }
 
-type SortField = "name" | "email" | "registrationDate" | "status";
+type SortField = "name" | "email";
 type SortOrder = "asc" | "desc";
 
 export const CandidateTable = ({
@@ -60,9 +62,8 @@ export const CandidateTable = ({
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [areaFilter, setAreaFilter] = useState<string>("all");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [sortField, setSortField] = useState<SortField>("registrationDate");
-  const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
+  const [sortField, setSortField] = useState<SortField>("name");
+  const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
 
   const getStatusVariant = (status: string) => {
     switch (status) {
@@ -106,17 +107,14 @@ export const CandidateTable = ({
         candidate.phone.includes(searchQuery);
 
       const matchesArea = areaFilter === "all" || candidate.area === areaFilter;
-      const matchesStatus = statusFilter === "all" || candidate.status === statusFilter;
 
-      return matchesSearch && matchesArea && matchesStatus;
+      return matchesSearch && matchesArea;
     });
 
     filtered.sort((a, b) => {
       let comparison = 0;
       
-      if (sortField === "registrationDate") {
-        comparison = new Date(a.registrationDate).getTime() - new Date(b.registrationDate).getTime();
-      } else if (sortField === "name" || sortField === "email" || sortField === "status") {
+      if (sortField === "name" || sortField === "email") {
         comparison = a[sortField].localeCompare(b[sortField]);
       }
 
@@ -124,7 +122,7 @@ export const CandidateTable = ({
     });
 
     return filtered;
-  }, [candidates, searchQuery, areaFilter, statusFilter, sortField, sortOrder]);
+  }, [candidates, searchQuery, areaFilter, sortField, sortOrder]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -185,19 +183,6 @@ export const CandidateTable = ({
               <SelectItem value="Design">Design</SelectItem>
             </SelectContent>
           </Select>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-full sm:w-[200px]">
-              <SelectValue placeholder="Filtrar por status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos os status</SelectItem>
-              <SelectItem value="Novo">Novo</SelectItem>
-              <SelectItem value="Em Análise">Em Análise</SelectItem>
-              <SelectItem value="Entrevista Agendada">Entrevista Agendada</SelectItem>
-              <SelectItem value="Aprovado">Aprovado</SelectItem>
-              <SelectItem value="Rejeitado">Rejeitado</SelectItem>
-            </SelectContent>
-          </Select>
         </div>
         {filteredAndSortedCandidates.length > 0 && (
           <p className="text-sm text-muted-foreground">
@@ -238,45 +223,21 @@ export const CandidateTable = ({
                    <TableHead className="h-14 font-semibold whitespace-nowrap">Telefone</TableHead>
                    <TableHead className="h-14 font-semibold whitespace-nowrap">Área de Interesse</TableHead>
                    <TableHead className="h-14 font-semibold whitespace-nowrap">Cidade</TableHead>
-                   <TableHead className="h-14 whitespace-nowrap text-center">
-                    <button
-                      onClick={() => handleSort("status")}
-                      className="flex items-center justify-center font-semibold hover:text-foreground transition-colors w-full"
-                    >
-                      Status
-                      <ArrowUpDown className="ml-2 h-4 w-4" />
-                    </button>
-                  </TableHead>
-                  <TableHead className="h-14 whitespace-nowrap text-center">
-                    <button
-                      onClick={() => handleSort("registrationDate")}
-                      className="flex items-center justify-center font-semibold hover:text-foreground transition-colors w-full"
-                    >
-                      Data de Cadastro
-                      <ArrowUpDown className="ml-2 h-4 w-4" />
-                    </button>
-                  </TableHead>
                   <TableHead className="text-center h-14 font-semibold whitespace-nowrap">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredAndSortedCandidates.map((candidate) => (
                   <TableRow key={candidate.id} className="hover:bg-muted/30 transition-colors">
-                    <TableCell className="font-medium py-5 whitespace-nowrap">{candidate.name}</TableCell>
-                    <TableCell className="py-5 text-muted-foreground whitespace-nowrap">{candidate.email}</TableCell>
-                    <TableCell className="py-5 text-muted-foreground whitespace-nowrap">{candidate.phone}</TableCell>
+                     <TableCell className="font-medium py-5 whitespace-nowrap">{candidate.name}</TableCell>
+                     <TableCell className="py-5 text-muted-foreground whitespace-nowrap">{candidate.email}</TableCell>
+                     <TableCell className="py-5 text-muted-foreground whitespace-nowrap">{candidate.phone}</TableCell>
                      <TableCell className="py-5 whitespace-nowrap">
                        <span className="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium bg-primary/10 text-primary whitespace-nowrap">
                          {candidate.area}
                        </span>
                      </TableCell>
-                     <TableCell className="py-5 text-muted-foreground whitespace-nowrap">{(candidate as any).city || '-'}</TableCell>
-                    <TableCell className="py-5 whitespace-nowrap text-center">
-                      <Badge variant={getStatusVariant(candidate.status)} className={`${getStatusColor(candidate.status)} font-medium whitespace-nowrap`}>
-                        {candidate.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="py-5 text-muted-foreground whitespace-nowrap text-center">{format(candidate.registrationDate, "dd/MM/yyyy")}</TableCell>
+                     <TableCell className="py-5 text-muted-foreground whitespace-nowrap">{candidate.city}</TableCell>
                     <TableCell className="text-center py-5 whitespace-nowrap">
                       <div className="flex justify-center gap-2">
                         <Button
@@ -317,9 +278,6 @@ export const CandidateTable = ({
                     <h3 className="font-semibold text-base truncate">{candidate.name}</h3>
                     <p className="text-sm text-muted-foreground truncate">{candidate.email}</p>
                   </div>
-                  <Badge variant={getStatusVariant(candidate.status)} className={`${getStatusColor(candidate.status)} font-medium text-xs shrink-0`}>
-                    {candidate.status}
-                  </Badge>
                 </div>
 
                 <div className="space-y-2 text-sm">
@@ -335,12 +293,8 @@ export const CandidateTable = ({
                    </div>
                    <div className="flex justify-between items-center">
                      <span className="text-muted-foreground">Cidade:</span>
-                     <span className="font-medium">{(candidate as any).city || '-'}</span>
+                     <span className="font-medium">{candidate.city}</span>
                    </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">Cadastro:</span>
-                    <span className="font-medium">{format(candidate.registrationDate, "dd/MM/yyyy")}</span>
-                  </div>
                 </div>
 
                 <div className="flex gap-2 pt-2 border-t">
