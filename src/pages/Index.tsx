@@ -48,6 +48,7 @@ const Index = () => {
           phone: data.phone,
           area: data.area,
           city: data.city,
+          linkedin_url: data.linkedin_url || null,
           resume_url: resumeUrl,
         });
 
