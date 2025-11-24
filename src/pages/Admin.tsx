@@ -104,9 +104,7 @@ const Admin = () => {
         email: data.email,
         phone: data.phone,
         area: data.area,
-        status: data.status,
         city: data.city,
-        registration_date: data.registrationDate.toISOString().split('T')[0],
       };
 
       if (resumeUrl) {
