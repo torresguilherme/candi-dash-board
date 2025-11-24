@@ -21,6 +21,7 @@ export type Database = {
           created_at: string | null
           email: string
           id: string
+          linkedin_url: string | null
           name: string
           phone: string
           registration_date: string
@@ -34,6 +35,7 @@ export type Database = {
           created_at?: string | null
           email: string
           id?: string
+          linkedin_url?: string | null
           name: string
           phone: string
           registration_date?: string
@@ -47,6 +49,7 @@ export type Database = {
           created_at?: string | null
           email?: string
           id?: string
+          linkedin_url?: string | null
           name?: string
           phone?: string
           registration_date?: string

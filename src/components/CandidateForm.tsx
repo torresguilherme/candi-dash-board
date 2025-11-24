@@ -26,6 +26,7 @@ const candidateSchema = z.object({
   phone: z.string().min(10, { message: "Telefone inválido" }),
   area: z.string().min(1, { message: "Selecione uma área de interesse" }),
   city: z.string().min(2, { message: "Cidade é obrigatória (mín. 2 caracteres)" }),
+  linkedin_url: z.string().url({ message: "URL do LinkedIn inválida" }).optional().or(z.literal("")),
   resume: z.any().optional(),
 });
 
@@ -54,6 +55,7 @@ export const CandidateForm = ({
       phone: "",
       area: "",
       city: "",
+      linkedin_url: "",
     },
   });
 
@@ -168,6 +170,24 @@ export const CandidateForm = ({
               <FormLabel>Cidade</FormLabel>
               <FormControl>
                 <Input placeholder="Digite a cidade" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="linkedin_url"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>LinkedIn (opcional)</FormLabel>
+              <FormControl>
+                <Input 
+                  type="url" 
+                  placeholder="https://www.linkedin.com/in/seu-perfil" 
+                  {...field} 
+                />
               </FormControl>
               <FormMessage />
             </FormItem>

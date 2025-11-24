@@ -18,6 +18,7 @@ interface Candidate {
   status: string;
   city: string;
   resume_url: string | null;
+  linkedin_url: string | null;
   registration_date: string;
 }
 
@@ -105,6 +106,7 @@ const Admin = () => {
         phone: data.phone,
         area: data.area,
         city: data.city,
+        linkedin_url: data.linkedin_url || null,
       };
 
       if (resumeUrl) {
@@ -168,6 +170,8 @@ const Admin = () => {
       area: c.area,
       status: c.status,
       city: c.city,
+      linkedin_url: c.linkedin_url,
+      resume_url: c.resume_url,
       registrationDate: new Date(c.registration_date),
     }));
   };

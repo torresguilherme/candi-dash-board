@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { format } from "date-fns";
-import { Pencil, Trash2, Search, ArrowUpDown } from "lucide-react";
+import { Pencil, Trash2, Search, ArrowUpDown, FileText, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import {
   Table,
@@ -42,6 +42,8 @@ export interface Candidate extends CandidateFormData {
   id: string;
   status?: string;
   registrationDate?: Date;
+  resume_url?: string | null;
+  linkedin_url?: string | null;
 }
 
 interface CandidateTableProps {
@@ -202,7 +204,7 @@ export const CandidateTable = ({
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/50 hover:bg-muted/50">
-                  <TableHead className="h-14 whitespace-nowrap">
+                   <TableHead className="h-14 whitespace-nowrap">
                     <button
                       onClick={() => handleSort("name")}
                       className="flex items-center font-semibold hover:text-foreground transition-colors"
@@ -223,6 +225,8 @@ export const CandidateTable = ({
                    <TableHead className="h-14 font-semibold whitespace-nowrap">Telefone</TableHead>
                    <TableHead className="h-14 font-semibold whitespace-nowrap">Área de Interesse</TableHead>
                    <TableHead className="h-14 font-semibold whitespace-nowrap">Cidade</TableHead>
+                   <TableHead className="h-14 font-semibold whitespace-nowrap">LinkedIn</TableHead>
+                   <TableHead className="h-14 font-semibold whitespace-nowrap">Currículo</TableHead>
                   <TableHead className="text-center h-14 font-semibold whitespace-nowrap">Ações</TableHead>
                 </TableRow>
               </TableHeader>
@@ -238,6 +242,36 @@ export const CandidateTable = ({
                        </span>
                      </TableCell>
                      <TableCell className="py-5 text-muted-foreground whitespace-nowrap">{candidate.city}</TableCell>
+                     <TableCell className="py-5 whitespace-nowrap">
+                       {candidate.linkedin_url ? (
+                         <a 
+                           href={candidate.linkedin_url} 
+                           target="_blank" 
+                           rel="noopener noreferrer"
+                           className="inline-flex items-center gap-1 text-primary hover:underline"
+                         >
+                           <ExternalLink className="h-4 w-4" />
+                           Perfil
+                         </a>
+                       ) : (
+                         <span className="text-muted-foreground">-</span>
+                       )}
+                     </TableCell>
+                     <TableCell className="py-5 whitespace-nowrap">
+                       {candidate.resume_url ? (
+                         <a 
+                           href={candidate.resume_url} 
+                           target="_blank" 
+                           rel="noopener noreferrer"
+                           className="inline-flex items-center gap-1 text-primary hover:underline"
+                         >
+                           <FileText className="h-4 w-4" />
+                           Ver PDF
+                         </a>
+                       ) : (
+                         <span className="text-muted-foreground">-</span>
+                       )}
+                     </TableCell>
                     <TableCell className="text-center py-5 whitespace-nowrap">
                       <div className="flex justify-center gap-2">
                         <Button
@@ -295,6 +329,34 @@ export const CandidateTable = ({
                      <span className="text-muted-foreground">Cidade:</span>
                      <span className="font-medium">{candidate.city}</span>
                    </div>
+                   {candidate.linkedin_url && (
+                     <div className="flex justify-between items-center">
+                       <span className="text-muted-foreground">LinkedIn:</span>
+                       <a 
+                         href={candidate.linkedin_url} 
+                         target="_blank" 
+                         rel="noopener noreferrer"
+                         className="text-primary hover:underline flex items-center gap-1"
+                       >
+                         <ExternalLink className="h-3 w-3" />
+                         Ver perfil
+                       </a>
+                     </div>
+                   )}
+                   {candidate.resume_url && (
+                     <div className="flex justify-between items-center">
+                       <span className="text-muted-foreground">Currículo:</span>
+                       <a 
+                         href={candidate.resume_url} 
+                         target="_blank" 
+                         rel="noopener noreferrer"
+                         className="text-primary hover:underline flex items-center gap-1"
+                       >
+                         <FileText className="h-3 w-3" />
+                         Ver PDF
+                       </a>
+                     </div>
+                   )}
                 </div>
 
                 <div className="flex gap-2 pt-2 border-t">
