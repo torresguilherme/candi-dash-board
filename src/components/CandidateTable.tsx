@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { format } from "date-fns";
-import { Pencil, Trash2, Search, ArrowUpDown, FileText, ExternalLink } from "lucide-react";
+import { Pencil, Trash2, Search, ArrowUpDown, FileText, ExternalLink, Download } from "lucide-react";
 import { toast } from "sonner";
 import {
   Table,
@@ -150,6 +150,24 @@ export const CandidateTable = ({
     }
   };
 
+  const handleDownloadResume = async (resumeUrl: string, candidateName: string) => {
+    try {
+      const response = await fetch(resumeUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `curriculo-${candidateName.replace(/\s+/g, '-').toLowerCase()}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast.success("Currículo baixado com sucesso!");
+    } catch (error) {
+      toast.error("Erro ao baixar currículo");
+    }
+  };
+
   if (candidates.length === 0) {
     return (
       <div className="text-center py-12 text-muted-foreground">
@@ -259,15 +277,13 @@ export const CandidateTable = ({
                      </TableCell>
                      <TableCell className="py-5 whitespace-nowrap">
                        {candidate.resume_url ? (
-                         <a 
-                           href={candidate.resume_url} 
-                           target="_blank" 
-                           rel="noopener noreferrer"
+                         <button
+                           onClick={() => handleDownloadResume(candidate.resume_url!, candidate.name)}
                            className="inline-flex items-center gap-1 text-primary hover:underline"
                          >
-                           <FileText className="h-4 w-4" />
-                           Ver PDF
-                         </a>
+                           <Download className="h-4 w-4" />
+                           Baixar PDF
+                         </button>
                        ) : (
                          <span className="text-muted-foreground">-</span>
                        )}
@@ -346,15 +362,13 @@ export const CandidateTable = ({
                    {candidate.resume_url && (
                      <div className="flex justify-between items-center">
                        <span className="text-muted-foreground">Currículo:</span>
-                       <a 
-                         href={candidate.resume_url} 
-                         target="_blank" 
-                         rel="noopener noreferrer"
+                       <button
+                         onClick={() => handleDownloadResume(candidate.resume_url!, candidate.name)}
                          className="text-primary hover:underline flex items-center gap-1"
                        >
-                         <FileText className="h-3 w-3" />
-                         Ver PDF
-                       </a>
+                         <Download className="h-3 w-3" />
+                         Baixar PDF
+                       </button>
                      </div>
                    )}
                 </div>
