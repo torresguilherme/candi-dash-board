@@ -2,8 +2,8 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { CandidateForm, CandidateFormData } from "@/components/CandidateForm";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import logo from "@/assets/logo.png";
 
 const Index = () => {
   const [submitting, setSubmitting] = useState(false);
@@ -81,17 +81,7 @@ const Index = () => {
       <header className="border-b bg-card shadow-sm">
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-              <Users className="h-6 w-6" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight">
-                LRB Assessoria
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                Faça sua candidatura e junte-se ao nosso time
-              </p>
-            </div>
+            <img src={logo} alt="LRB Assessoria" className="h-12" />
           </div>
         </div>
       </header>
