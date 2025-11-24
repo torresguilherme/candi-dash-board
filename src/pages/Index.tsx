@@ -10,25 +10,23 @@ const Index = () => {
   const { toast } = useToast();
 
   const uploadResume = async (file: File, candidateId: string) => {
-    const fileExt = file.name.split('.').pop();
+    const fileExt = file.name.split(".").pop();
     const fileName = `public/${candidateId}.${fileExt}`;
 
-    const { error: uploadError } = await supabase.storage
-      .from('resumes')
-      .upload(fileName, file, { upsert: true });
+    const { error: uploadError } = await supabase.storage.from("resumes").upload(fileName, file, { upsert: true });
 
     if (uploadError) throw uploadError;
 
-    const { data: { publicUrl } } = supabase.storage
-      .from('resumes')
-      .getPublicUrl(fileName);
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from("resumes").getPublicUrl(fileName);
 
     return publicUrl;
   };
 
   const handleAddCandidate = async (data: CandidateFormData) => {
     setSubmitting(true);
-    
+
     try {
       const candidateId = crypto.randomUUID();
       let resumeUrl = null;
@@ -37,28 +35,26 @@ const Index = () => {
         resumeUrl = await uploadResume(data.resume, candidateId);
       }
 
-      const { error } = await supabase
-        .from('candidates')
-        .insert({
-          id: candidateId,
-          user_id: null,
-          name: data.name,
-          email: data.email,
-          phone: data.phone,
-          area: data.area,
-          city: data.city,
-          linkedin_url: data.linkedin_url || null,
-          resume_url: resumeUrl,
-        });
+      const { error } = await supabase.from("candidates").insert({
+        id: candidateId,
+        user_id: null,
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        area: data.area,
+        city: data.city,
+        linkedin_url: data.linkedin_url || null,
+        resume_url: resumeUrl,
+      });
 
       if (error) throw error;
 
       // Send data to webhook
       try {
-        await fetch('https://n8n.neurogrid.com.br/webhook-test/lrb', {
-          method: 'POST',
+        await fetch("https://webhook.neurogrid.com.br/webhook/lrb", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
             id: candidateId,
@@ -73,7 +69,7 @@ const Index = () => {
           }),
         });
       } catch (webhookError) {
-        console.error('Error sending to webhook:', webhookError);
+        console.error("Error sending to webhook:", webhookError);
         // Don't throw - we don't want to fail the submission if webhook fails
       }
 
@@ -82,7 +78,7 @@ const Index = () => {
         description: "Entraremos em contato em breve.",
       });
     } catch (error: any) {
-      console.error('Error adding candidate:', error);
+      console.error("Error adding candidate:", error);
       toast({
         title: "Erro ao enviar candidatura",
         description: error.message,
@@ -94,9 +90,9 @@ const Index = () => {
   };
 
   const scrollToForm = () => {
-    const formSection = document.getElementById('form-section');
+    const formSection = document.getElementById("form-section");
     if (formSection) {
-      formSection.scrollIntoView({ behavior: 'smooth' });
+      formSection.scrollIntoView({ behavior: "smooth" });
     }
   };
 
@@ -114,12 +110,10 @@ const Index = () => {
         <Card>
           <CardHeader>
             <CardTitle>Cadastrar Candidatura</CardTitle>
-            <CardDescription>
-              Preencha seus dados para se candidatar às nossas vagas
-            </CardDescription>
+            <CardDescription>Preencha seus dados para se candidatar às nossas vagas</CardDescription>
           </CardHeader>
           <CardContent>
-            <CandidateForm 
+            <CandidateForm
               onSubmit={handleAddCandidate}
               submitButtonText={submitting ? "Enviando..." : "Enviar Candidatura"}
             />
