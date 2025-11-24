@@ -26,7 +26,7 @@ export type Database = {
           registration_date: string
           resume_url: string | null
           status: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           area: string
@@ -39,7 +39,7 @@ export type Database = {
           registration_date?: string
           resume_url?: string | null
           status?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           area?: string
@@ -52,7 +52,7 @@ export type Database = {
           registration_date?: string
           resume_url?: string | null
           status?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: []
       }

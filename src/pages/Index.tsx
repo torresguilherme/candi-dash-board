@@ -38,14 +38,11 @@ const Index = () => {
         resumeUrl = await uploadResume(data.resume, candidateId);
       }
 
-      // Public UUID for non-authenticated submissions
-      const publicUserId = '00000000-0000-0000-0000-000000000000';
-
       const { error } = await supabase
         .from('candidates')
         .insert({
           id: candidateId,
-          user_id: publicUserId,
+          user_id: null,
           name: data.name,
           email: data.email,
           phone: data.phone,
