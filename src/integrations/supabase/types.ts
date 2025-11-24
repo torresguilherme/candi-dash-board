@@ -36,9 +36,9 @@ export type Database = {
           id?: string
           name: string
           phone: string
-          registration_date: string
+          registration_date?: string
           resume_url?: string | null
-          status: string
+          status?: string
           user_id: string
         }
         Update: {
