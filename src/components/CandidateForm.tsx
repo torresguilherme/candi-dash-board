@@ -150,11 +150,19 @@ export const CandidateForm = ({
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="Tecnologia">Tecnologia</SelectItem>
-                  <SelectItem value="Marketing">Marketing</SelectItem>
-                  <SelectItem value="Vendas">Vendas</SelectItem>
-                  <SelectItem value="Recursos Humanos">Recursos Humanos</SelectItem>
+                  <SelectItem value="Administrativo">Administrativo</SelectItem>
+                  <SelectItem value="Atendimento ao Cliente">Atendimento ao Cliente</SelectItem>
                   <SelectItem value="Design">Design</SelectItem>
+                  <SelectItem value="Financeiro">Financeiro</SelectItem>
+                  <SelectItem value="Jurídico">Jurídico</SelectItem>
+                  <SelectItem value="Logística">Logística</SelectItem>
+                  <SelectItem value="Marketing">Marketing</SelectItem>
+                  <SelectItem value="Operações">Operações</SelectItem>
+                  <SelectItem value="Produto">Produto</SelectItem>
+                  <SelectItem value="Recursos Humanos">Recursos Humanos</SelectItem>
+                  <SelectItem value="Tecnologia">Tecnologia</SelectItem>
+                  <SelectItem value="Vendas">Vendas</SelectItem>
+                  <SelectItem value="Outros">Outros</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
