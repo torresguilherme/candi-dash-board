@@ -1,15 +1,12 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { CandidateForm, CandidateFormData } from "@/components/CandidateForm";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Users, LogIn } from "lucide-react";
+import { Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
   const [submitting, setSubmitting] = useState(false);
-  const navigate = useNavigate();
   const { toast } = useToast();
 
   const uploadResume = async (file: File, candidateId: string) => {
@@ -93,10 +90,6 @@ const Index = () => {
                 </p>
               </div>
             </div>
-            <Button variant="outline" onClick={() => navigate("/auth")}>
-              <LogIn className="h-4 w-4 mr-2" />
-              Área Administrativa
-            </Button>
           </div>
         </div>
       </header>
