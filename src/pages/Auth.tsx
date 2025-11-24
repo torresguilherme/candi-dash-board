@@ -66,7 +66,7 @@ const Auth = () => {
           title: "Login realizado com sucesso!",
           description: "Bem-vindo ao sistema",
         });
-        navigate("/");
+        navigate("/admin");
       } else {
         const { error } = await supabase.auth.signUp({
           email,
