@@ -362,8 +362,8 @@ const Admin = () => {
               </div>
               <Dialog open={isAddingCandidate} onOpenChange={setIsAddingCandidate}>
                 <DialogTrigger asChild>
-                  <Button>
-                    <UserPlus className="h-4 w-4 mr-2" />
+                  <Button size="lg" className="shadow-lg">
+                    <UserPlus className="h-5 w-5 mr-2" />
                     Novo Candidato
                   </Button>
                 </DialogTrigger>

@@ -107,7 +107,7 @@ export const CandidateTable = ({
       case "Novo":
         return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200";
       case "Em Análise":
-        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200";
+        return "bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300";
       case "Entrevista Agendada":
         return "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200";
       case "Aprovado":
@@ -129,7 +129,7 @@ export const CandidateTable = ({
       "Engenharia": "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
       "Financeiro": "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
       "Jurídico": "bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200",
-      "Logística": "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200",
+      "Logística": "bg-teal-100 text-teal-700 dark:bg-teal-900/50 dark:text-teal-300",
       "Marketing": "bg-rose-100 text-rose-800 dark:bg-rose-900 dark:text-rose-200",
       "Operações": "bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-200",
       "Produto": "bg-violet-100 text-violet-800 dark:bg-violet-900 dark:text-violet-200",
@@ -324,8 +324,8 @@ export const CandidateTable = ({
           </div>
         )}
 
-        <div className="flex justify-between items-center gap-3">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 flex-1">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 flex-1 w-full">
           <div className="relative lg:col-span-2">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -385,7 +385,7 @@ export const CandidateTable = ({
             </SelectContent>
           </Select>
         </div>
-        <Button variant="outline" size="sm" onClick={exportToCSV} className="shrink-0">
+        <Button variant="outline" onClick={exportToCSV} className="w-full sm:w-auto">
           <FileDown className="h-4 w-4 mr-2" />
           Exportar CSV
         </Button>
