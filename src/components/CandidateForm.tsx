@@ -20,6 +20,36 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 
+const brazilianCities = {
+  "AC": ["Rio Branco", "Cruzeiro do Sul"],
+  "AL": ["Maceió", "Arapiraca"],
+  "AP": ["Macapá", "Santana"],
+  "AM": ["Manaus", "Parintins", "Itacoatiara"],
+  "BA": ["Salvador", "Feira de Santana", "Vitória da Conquista", "Camaçari", "Itabuna", "Juazeiro"],
+  "CE": ["Fortaleza", "Caucaia", "Juazeiro do Norte", "Maracanaú", "Sobral"],
+  "DF": ["Brasília"],
+  "ES": ["Vitória", "Vila Velha", "Serra", "Cariacica", "Cachoeiro de Itapemirim"],
+  "GO": ["Goiânia", "Aparecida de Goiânia", "Anápolis", "Rio Verde"],
+  "MA": ["São Luís", "Imperatriz", "São José de Ribamar", "Timon"],
+  "MT": ["Cuiabá", "Várzea Grande", "Rondonópolis", "Sinop"],
+  "MS": ["Campo Grande", "Dourados", "Três Lagoas", "Corumbá"],
+  "MG": ["Belo Horizonte", "Uberlândia", "Contagem", "Juiz de Fora", "Betim", "Montes Claros", "Ribeirão das Neves", "Uberaba", "Governador Valadares", "Ipatinga"],
+  "PA": ["Belém", "Ananindeua", "Santarém", "Marabá", "Castanhal"],
+  "PB": ["João Pessoa", "Campina Grande", "Santa Rita", "Patos"],
+  "PR": ["Curitiba", "Londrina", "Maringá", "Ponta Grossa", "Cascavel", "São José dos Pinhais", "Foz do Iguaçu"],
+  "PE": ["Recife", "Jaboatão dos Guararapes", "Olinda", "Caruaru", "Petrolina"],
+  "PI": ["Teresina", "Parnaíba", "Picos", "Floriano"],
+  "RJ": ["Rio de Janeiro", "São Gonçalo", "Duque de Caxias", "Nova Iguaçu", "Niterói", "Belford Roxo", "Campos dos Goytacazes", "São João de Meriti", "Petrópolis", "Volta Redonda"],
+  "RN": ["Natal", "Mossoró", "Parnamirim", "São Gonçalo do Amarante"],
+  "RS": ["Porto Alegre", "Caxias do Sul", "Pelotas", "Canoas", "Santa Maria", "Gravataí", "Viamão", "Novo Hamburgo"],
+  "RO": ["Porto Velho", "Ji-Paraná", "Ariquemes", "Cacoal"],
+  "RR": ["Boa Vista", "Rorainópolis"],
+  "SC": ["Florianópolis", "Joinville", "Blumenau", "São José", "Criciúma", "Chapecó", "Itajaí"],
+  "SE": ["Aracaju", "Nossa Senhora do Socorro", "Lagarto", "Itabaiana"],
+  "SP": ["São Paulo", "Guarulhos", "Campinas", "São Bernardo do Campo", "Santo André", "Osasco", "São José dos Campos", "Ribeirão Preto", "Sorocaba", "Santos", "Mauá", "São José do Rio Preto", "Mogi das Cruzes", "Diadema", "Piracicaba", "Bauru"],
+  "TO": ["Palmas", "Araguaína", "Gurupi"]
+};
+
 const candidateSchema = z.object({
   name: z.string().min(3, { message: "Nome completo é obrigatório (mín. 3 caracteres)" }),
   email: z.string().email({ message: "E-mail inválido" }),
@@ -178,9 +208,27 @@ export const CandidateForm = ({
           render={({ field }) => (
             <FormItem>
               <FormLabel>Cidade</FormLabel>
-              <FormControl>
-                <Input placeholder="Digite a cidade" {...field} />
-              </FormControl>
+              <Select onValueChange={field.onChange} value={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione uma cidade" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent className="max-h-[300px]">
+                  {Object.entries(brazilianCities).map(([state, cities]) => (
+                    <div key={state}>
+                      <div className="px-2 py-1.5 text-sm font-semibold text-muted-foreground">
+                        {state}
+                      </div>
+                      {cities.map((city) => (
+                        <SelectItem key={`${state}-${city}`} value={city}>
+                          {city}
+                        </SelectItem>
+                      ))}
+                    </div>
+                  ))}
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}
