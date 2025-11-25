@@ -324,72 +324,73 @@ export const CandidateTable = ({
           </div>
         )}
 
-        <div className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-3">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 flex-1">
-          <div className="relative lg:col-span-2">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Pesquisar por nome, e-mail, telefone ou cidade..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
+        <div className="space-y-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+            <div className="relative lg:col-span-2">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Pesquisar por nome, e-mail, telefone ou cidade..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <Select value={areaFilter} onValueChange={setAreaFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="Área de interesse" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas as áreas</SelectItem>
+                <SelectItem value="Administrativo">Administrativo</SelectItem>
+                <SelectItem value="Atendimento ao Cliente">Atendimento ao Cliente</SelectItem>
+                <SelectItem value="Comunicação">Comunicação</SelectItem>
+                <SelectItem value="Compras">Compras</SelectItem>
+                <SelectItem value="Design">Design</SelectItem>
+                <SelectItem value="Engenharia">Engenharia</SelectItem>
+                <SelectItem value="Financeiro">Financeiro</SelectItem>
+                <SelectItem value="Jurídico">Jurídico</SelectItem>
+                <SelectItem value="Logística">Logística</SelectItem>
+                <SelectItem value="Marketing">Marketing</SelectItem>
+                <SelectItem value="Operações">Operações</SelectItem>
+                <SelectItem value="Produto">Produto</SelectItem>
+                <SelectItem value="Recursos Humanos">Recursos Humanos</SelectItem>
+                <SelectItem value="Tecnologia">Tecnologia</SelectItem>
+                <SelectItem value="Vendas">Vendas</SelectItem>
+                <SelectItem value="Outros">Outros</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={cityFilter} onValueChange={setCityFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="Filtrar por cidade" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas as cidades</SelectItem>
+                {uniqueCities.map((city) => (
+                  <SelectItem key={city} value={city}>
+                    {city}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="Filtrar por status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os status</SelectItem>
+                <SelectItem value="Novo">Novo</SelectItem>
+                <SelectItem value="Em Análise">Em Análise</SelectItem>
+                <SelectItem value="Entrevista Agendada">Entrevista Agendada</SelectItem>
+                <SelectItem value="Aprovado">Aprovado</SelectItem>
+                <SelectItem value="Rejeitado">Rejeitado</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button variant="outline" onClick={exportToCSV}>
+              <FileDown className="h-4 w-4 mr-2" />
+              Exportar CSV
+            </Button>
           </div>
-          <Select value={areaFilter} onValueChange={setAreaFilter}>
-            <SelectTrigger>
-              <SelectValue placeholder="Área de interesse" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas as áreas</SelectItem>
-              <SelectItem value="Administrativo">Administrativo</SelectItem>
-              <SelectItem value="Atendimento ao Cliente">Atendimento ao Cliente</SelectItem>
-              <SelectItem value="Comunicação">Comunicação</SelectItem>
-              <SelectItem value="Design">Design</SelectItem>
-              <SelectItem value="Engenharia">Engenharia</SelectItem>
-              <SelectItem value="Financeiro">Financeiro</SelectItem>
-              <SelectItem value="Jurídico">Jurídico</SelectItem>
-              <SelectItem value="Logística">Logística</SelectItem>
-              <SelectItem value="Marketing">Marketing</SelectItem>
-              <SelectItem value="Operações">Operações</SelectItem>
-              <SelectItem value="Produto">Produto</SelectItem>
-              <SelectItem value="Recursos Humanos">Recursos Humanos</SelectItem>
-              <SelectItem value="Tecnologia">Tecnologia</SelectItem>
-              <SelectItem value="Vendas">Vendas</SelectItem>
-              <SelectItem value="Outros">Outros</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={cityFilter} onValueChange={setCityFilter}>
-            <SelectTrigger>
-              <SelectValue placeholder="Filtrar por cidade" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas as cidades</SelectItem>
-              {uniqueCities.map((city) => (
-                <SelectItem key={city} value={city}>
-                  {city}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger>
-              <SelectValue placeholder="Filtrar por status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos os status</SelectItem>
-              <SelectItem value="Novo">Novo</SelectItem>
-              <SelectItem value="Em Análise">Em Análise</SelectItem>
-              <SelectItem value="Entrevista Agendada">Entrevista Agendada</SelectItem>
-              <SelectItem value="Aprovado">Aprovado</SelectItem>
-              <SelectItem value="Rejeitado">Rejeitado</SelectItem>
-            </SelectContent>
-          </Select>
         </div>
-        <Button variant="outline" onClick={exportToCSV} className="w-full lg:w-auto lg:shrink-0">
-          <FileDown className="h-4 w-4 mr-2" />
-          Exportar CSV
-        </Button>
-      </div>
         {filteredAndSortedCandidates.length > 0 && (
           <p className="text-sm text-muted-foreground">
             Mostrando {((currentPage - 1) * itemsPerPage) + 1} - {Math.min(currentPage * itemsPerPage, filteredAndSortedCandidates.length)} de {filteredAndSortedCandidates.length} candidato{filteredAndSortedCandidates.length !== 1 ? "s" : ""}

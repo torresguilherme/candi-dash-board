@@ -353,7 +353,7 @@ const Admin = () => {
         {/* Candidates Table */}
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
                 <CardTitle>Lista de Candidatos</CardTitle>
                 <CardDescription>
@@ -362,7 +362,7 @@ const Admin = () => {
               </div>
               <Dialog open={isAddingCandidate} onOpenChange={setIsAddingCandidate}>
                 <DialogTrigger asChild>
-                  <Button>
+                  <Button className="w-full sm:w-auto">
                     <UserPlus className="h-4 w-4 mr-2" />
                     Novo Candidato
                   </Button>
