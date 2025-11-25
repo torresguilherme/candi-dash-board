@@ -324,8 +324,8 @@ export const CandidateTable = ({
           </div>
         )}
 
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 flex-1 w-full">
+        <div className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 flex-1">
           <div className="relative lg:col-span-2">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -385,7 +385,7 @@ export const CandidateTable = ({
             </SelectContent>
           </Select>
         </div>
-        <Button variant="outline" onClick={exportToCSV} className="w-full sm:w-auto">
+        <Button variant="outline" onClick={exportToCSV} className="w-full lg:w-auto lg:shrink-0">
           <FileDown className="h-4 w-4 mr-2" />
           Exportar CSV
         </Button>
