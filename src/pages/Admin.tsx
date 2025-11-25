@@ -6,8 +6,10 @@ import { CandidateTable } from "@/components/CandidateTable";
 import { CandidateFormData } from "@/components/CandidateForm";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Users, LogOut, Home } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Users, LogOut, Home, UserPlus, MapPin, Briefcase } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { CandidateForm } from "@/components/CandidateForm";
 
 interface Candidate {
   id: string;
@@ -26,6 +28,7 @@ const Admin = () => {
   const { user, isAdmin, loading, signOut } = useAuth();
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [loadingCandidates, setLoadingCandidates] = useState(true);
+  const [isAddingCandidate, setIsAddingCandidate] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -161,6 +164,91 @@ const Admin = () => {
     }
   };
 
+  const handleAddCandidate = async (data: CandidateFormData) => {
+    if (!user || !isAdmin) return;
+
+    try {
+      let resumeUrl = null;
+
+      if (data.resume instanceof File) {
+        resumeUrl = await uploadResume(data.resume, user.id, crypto.randomUUID());
+      }
+
+      const { error } = await supabase
+        .from('candidates')
+        .insert({
+          name: data.name,
+          email: data.email,
+          phone: data.phone,
+          area: data.area,
+          city: data.city,
+          linkedin_url: data.linkedin_url || null,
+          resume_url: resumeUrl,
+          user_id: user.id,
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Candidato adicionado com sucesso!",
+      });
+
+      setIsAddingCandidate(false);
+      fetchCandidates();
+    } catch (error: any) {
+      console.error('Error adding candidate:', error);
+      toast({
+        title: "Erro ao adicionar candidato",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleBulkStatusChange = async (ids: string[], newStatus: string) => {
+    if (!user || !isAdmin) return;
+
+    try {
+      const { error } = await supabase
+        .from('candidates')
+        .update({ status: newStatus })
+        .in('id', ids);
+
+      if (error) throw error;
+
+      fetchCandidates();
+    } catch (error: any) {
+      console.error('Error updating status:', error);
+      toast({
+        title: "Erro ao atualizar status",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleBulkDelete = async (ids: string[]) => {
+    if (!user || !isAdmin) return;
+
+    try {
+      const { error } = await supabase
+        .from('candidates')
+        .delete()
+        .in('id', ids);
+
+      if (error) throw error;
+
+      fetchCandidates();
+    } catch (error: any) {
+      console.error('Error deleting candidates:', error);
+      toast({
+        title: "Erro ao excluir candidatos",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   const transformCandidates = (dbCandidates: Candidate[]) => {
     return dbCandidates.map(c => ({
       id: c.id,
@@ -223,23 +311,38 @@ const Admin = () => {
       <main className="container mx-auto px-4 py-8 space-y-6">
         {/* Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card>
+          <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
             <CardHeader className="pb-3">
-              <CardDescription>Total de Candidatos</CardDescription>
+              <div className="flex items-center justify-between">
+                <CardDescription>Total de Candidatos</CardDescription>
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                  <Users className="h-5 w-5 text-primary" />
+                </div>
+              </div>
               <CardTitle className="text-3xl">{candidates.length}</CardTitle>
             </CardHeader>
           </Card>
-          <Card>
+          <Card className="border-blue-500/20 bg-gradient-to-br from-blue-500/5 to-transparent">
             <CardHeader className="pb-3">
-              <CardDescription>Áreas Diferentes</CardDescription>
+              <div className="flex items-center justify-between">
+                <CardDescription>Áreas Diferentes</CardDescription>
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/10">
+                  <Briefcase className="h-5 w-5 text-blue-500" />
+                </div>
+              </div>
               <CardTitle className="text-3xl">
                 {new Set(candidates.map(c => c.area)).size}
               </CardTitle>
             </CardHeader>
           </Card>
-          <Card>
+          <Card className="border-green-500/20 bg-gradient-to-br from-green-500/5 to-transparent">
             <CardHeader className="pb-3">
-              <CardDescription>Cidades Diferentes</CardDescription>
+              <div className="flex items-center justify-between">
+                <CardDescription>Cidades Diferentes</CardDescription>
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-500/10">
+                  <MapPin className="h-5 w-5 text-green-500" />
+                </div>
+              </div>
               <CardTitle className="text-3xl">
                 {new Set(candidates.map(c => c.city)).size}
               </CardTitle>
@@ -250,16 +353,36 @@ const Admin = () => {
         {/* Candidates Table */}
         <Card>
           <CardHeader>
-            <CardTitle>Lista de Candidatos</CardTitle>
-            <CardDescription>
-              Gerencie todos os candidatos cadastrados no sistema
-            </CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Lista de Candidatos</CardTitle>
+                <CardDescription>
+                  Gerencie todos os candidatos cadastrados no sistema
+                </CardDescription>
+              </div>
+              <Dialog open={isAddingCandidate} onOpenChange={setIsAddingCandidate}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <UserPlus className="h-4 w-4 mr-2" />
+                    Novo Candidato
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>Adicionar Novo Candidato</DialogTitle>
+                  </DialogHeader>
+                  <CandidateForm onSubmit={handleAddCandidate} />
+                </DialogContent>
+              </Dialog>
+            </div>
           </CardHeader>
           <CardContent>
             <CandidateTable
               candidates={transformCandidates(candidates)}
               onEdit={handleEditCandidate}
               onDelete={handleDeleteCandidate}
+              onBulkStatusChange={handleBulkStatusChange}
+              onBulkDelete={handleBulkDelete}
             />
           </CardContent>
         </Card>
