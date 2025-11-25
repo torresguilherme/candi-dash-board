@@ -221,8 +221,8 @@ export const CandidateForm = ({
                         {state}
                       </div>
                       {cities.map((city) => (
-                        <SelectItem key={`${state}-${city}`} value={city}>
-                          {city}
+                        <SelectItem key={`${state}-${city}`} value={`${city} - ${state}`}>
+                          {city} - {state}
                         </SelectItem>
                       ))}
                     </div>
