@@ -64,8 +64,14 @@ export const CandidateTable = ({
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [areaFilter, setAreaFilter] = useState<string>("all");
+  const [cityFilter, setCityFilter] = useState<string>("all");
   const [sortField, setSortField] = useState<SortField>("name");
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
+
+  const uniqueCities = useMemo(() => {
+    const cities = [...new Set(candidates.map(c => c.city))].sort();
+    return cities;
+  }, [candidates]);
 
   const getStatusVariant = (status: string) => {
     switch (status) {
@@ -106,11 +112,13 @@ export const CandidateTable = ({
       const matchesSearch =
         candidate.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         candidate.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        candidate.phone.includes(searchQuery);
+        candidate.phone.includes(searchQuery) ||
+        candidate.city.toLowerCase().includes(searchQuery.toLowerCase());
 
       const matchesArea = areaFilter === "all" || candidate.area === areaFilter;
+      const matchesCity = cityFilter === "all" || candidate.city === cityFilter;
 
-      return matchesSearch && matchesArea;
+      return matchesSearch && matchesArea && matchesCity;
     });
 
     filtered.sort((a, b) => {
@@ -124,7 +132,7 @@ export const CandidateTable = ({
     });
 
     return filtered;
-  }, [candidates, searchQuery, areaFilter, sortField, sortOrder]);
+  }, [candidates, searchQuery, areaFilter, cityFilter, sortField, sortOrder]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -179,28 +187,51 @@ export const CandidateTable = ({
 
   return (
     <>
-      <div className="space-y-4 mb-4">
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="relative flex-1">
+      <div className="space-y-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className="relative lg:col-span-2">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Pesquisar por nome, e-mail ou telefone..."
+              placeholder="Pesquisar por nome, e-mail, telefone ou cidade..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
             />
           </div>
           <Select value={areaFilter} onValueChange={setAreaFilter}>
-            <SelectTrigger className="w-full sm:w-[200px]">
-              <SelectValue placeholder="Filtrar por área" />
+            <SelectTrigger>
+              <SelectValue placeholder="Área de interesse" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todas as áreas</SelectItem>
-              <SelectItem value="Tecnologia">Tecnologia</SelectItem>
-              <SelectItem value="Marketing">Marketing</SelectItem>
-              <SelectItem value="Vendas">Vendas</SelectItem>
-              <SelectItem value="Recursos Humanos">Recursos Humanos</SelectItem>
+              <SelectItem value="Administrativo">Administrativo</SelectItem>
+              <SelectItem value="Atendimento ao Cliente">Atendimento ao Cliente</SelectItem>
+              <SelectItem value="Comunicação">Comunicação</SelectItem>
               <SelectItem value="Design">Design</SelectItem>
+              <SelectItem value="Engenharia">Engenharia</SelectItem>
+              <SelectItem value="Financeiro">Financeiro</SelectItem>
+              <SelectItem value="Jurídico">Jurídico</SelectItem>
+              <SelectItem value="Logística">Logística</SelectItem>
+              <SelectItem value="Marketing">Marketing</SelectItem>
+              <SelectItem value="Operações">Operações</SelectItem>
+              <SelectItem value="Produto">Produto</SelectItem>
+              <SelectItem value="Recursos Humanos">Recursos Humanos</SelectItem>
+              <SelectItem value="Tecnologia">Tecnologia</SelectItem>
+              <SelectItem value="Vendas">Vendas</SelectItem>
+              <SelectItem value="Outros">Outros</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={cityFilter} onValueChange={setCityFilter}>
+            <SelectTrigger>
+              <SelectValue placeholder="Filtrar por cidade" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas as cidades</SelectItem>
+              {uniqueCities.map((city) => (
+                <SelectItem key={city} value={city}>
+                  {city}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>

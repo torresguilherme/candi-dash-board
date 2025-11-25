@@ -220,14 +220,39 @@ const Admin = () => {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-8 space-y-6">
+        {/* Statistics Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardDescription>Total de Candidatos</CardDescription>
+              <CardTitle className="text-3xl">{candidates.length}</CardTitle>
+            </CardHeader>
+          </Card>
+          <Card>
+            <CardHeader className="pb-3">
+              <CardDescription>Áreas Diferentes</CardDescription>
+              <CardTitle className="text-3xl">
+                {new Set(candidates.map(c => c.area)).size}
+              </CardTitle>
+            </CardHeader>
+          </Card>
+          <Card>
+            <CardHeader className="pb-3">
+              <CardDescription>Cidades Diferentes</CardDescription>
+              <CardTitle className="text-3xl">
+                {new Set(candidates.map(c => c.city)).size}
+              </CardTitle>
+            </CardHeader>
+          </Card>
+        </div>
+
+        {/* Candidates Table */}
         <Card>
           <CardHeader>
-            <CardTitle>Candidatos Cadastrados</CardTitle>
+            <CardTitle>Lista de Candidatos</CardTitle>
             <CardDescription>
-              {candidates.length === 0
-                ? "Nenhum candidato cadastrado"
-                : `${candidates.length} candidato${candidates.length !== 1 ? "s" : ""} no sistema`}
+              Gerencie todos os candidatos cadastrados no sistema
             </CardDescription>
           </CardHeader>
           <CardContent>
