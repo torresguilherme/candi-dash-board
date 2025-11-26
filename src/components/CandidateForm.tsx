@@ -192,6 +192,7 @@ export const CandidateForm = ({
                   <SelectItem value="Marketing">Marketing</SelectItem>
                   <SelectItem value="Operações">Operações</SelectItem>
                   <SelectItem value="Produto">Produto</SelectItem>
+                  <SelectItem value="Projetos">Projetos</SelectItem>
                   <SelectItem value="Recursos Humanos">Recursos Humanos</SelectItem>
                   <SelectItem value="Tecnologia">Tecnologia</SelectItem>
                   <SelectItem value="Vendas">Vendas</SelectItem>
