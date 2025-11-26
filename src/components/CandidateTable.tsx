@@ -504,8 +504,25 @@ export const CandidateTable = ({
                        ) : (
                          <span className="text-muted-foreground">-</span>
                        )}
-                     </TableCell>
-                    <TableCell className="text-center py-5 whitespace-nowrap">
+                      </TableCell>
+                      <TableCell className="py-5">
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setFolderCandidate(candidate)}
+                                className="h-9 w-9 hover:bg-primary/10 hover:text-primary transition-colors"
+                              >
+                                <FolderOpen className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Ver pasta do candidato</TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </TableCell>
+                     <TableCell className="text-center py-5 whitespace-nowrap">
                       <div className="flex justify-center gap-2">
                         <Tooltip>
                           <TooltipTrigger asChild>
@@ -658,6 +675,15 @@ export const CandidateTable = ({
                   <Button
                     variant="outline"
                     size="sm"
+                    onClick={() => setFolderCandidate(candidate)}
+                    className="flex-1 hover:bg-primary/10 hover:text-primary hover:border-primary transition-colors"
+                  >
+                    <FolderOpen className="h-4 w-4 mr-2" />
+                    Pasta
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
                     onClick={() => setEditingCandidate(candidate)}
                     className="flex-1 hover:bg-primary/10 hover:text-primary hover:border-primary transition-colors"
                   >
@@ -772,6 +798,17 @@ export const CandidateTable = ({
               </div>
               <div className="flex gap-2 pt-4 border-t">
                 <Button
+                  variant="outline"
+                  onClick={() => {
+                    setFolderCandidate(viewingCandidate);
+                    setViewingCandidate(null);
+                  }}
+                  className="flex-1"
+                >
+                  <FolderOpen className="h-4 w-4 mr-2" />
+                  Ver Pasta
+                </Button>
+                <Button
                   variant="default"
                   onClick={() => {
                     setEditingCandidate(viewingCandidate);
@@ -780,7 +817,7 @@ export const CandidateTable = ({
                   className="flex-1"
                 >
                   <Pencil className="h-4 w-4 mr-2" />
-                  Editar Candidato
+                  Editar
                 </Button>
                 <Button
                   variant="destructive"
