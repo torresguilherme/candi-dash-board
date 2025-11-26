@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { format } from "date-fns";
-import { Pencil, Trash2, Search, ArrowUpDown, FileText, ExternalLink, Download, Eye, ChevronLeft, ChevronRight, FileDown } from "lucide-react";
+import { Pencil, Trash2, Search, ArrowUpDown, FileText, ExternalLink, Download, Eye, ChevronLeft, ChevronRight, FileDown, FolderOpen } from "lucide-react";
 import { toast } from "sonner";
 import {
   Table,
@@ -40,6 +40,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
+import { CandidateFolderDialog } from "./CandidateFolderDialog";
 
 export interface Candidate extends CandidateFormData {
   id: string;
@@ -78,6 +79,7 @@ export const CandidateTable = ({
   const [viewingCandidate, setViewingCandidate] = useState<Candidate | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [folderCandidate, setFolderCandidate] = useState<Candidate | null>(null);
   const itemsPerPage = 10;
 
   const uniqueCities = useMemo(() => {
@@ -441,6 +443,7 @@ export const CandidateTable = ({
                   <TableHead className="h-14 font-semibold whitespace-nowrap">Status</TableHead>
                   <TableHead className="h-14 font-semibold whitespace-nowrap">LinkedIn</TableHead>
                   <TableHead className="h-14 font-semibold whitespace-nowrap">Currículo</TableHead>
+                  <TableHead className="h-14 font-semibold whitespace-nowrap">Pasta</TableHead>
                   <TableHead className="text-center h-14 font-semibold whitespace-nowrap">Ações</TableHead>
                 </TableRow>
               </TableHeader>
@@ -812,6 +815,15 @@ export const CandidateTable = ({
           )}
         </DialogContent>
       </Dialog>
+
+      {folderCandidate && (
+        <CandidateFolderDialog
+          open={folderCandidate !== null}
+          onOpenChange={(open) => !open && setFolderCandidate(null)}
+          candidateId={folderCandidate.id}
+          candidateName={folderCandidate.name}
+        />
+      )}
 
       <AlertDialog open={!!deletingId} onOpenChange={() => setDeletingId(null)}>
         <AlertDialogContent>
