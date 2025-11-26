@@ -133,6 +133,7 @@ export const CandidateTable = ({
       "Marketing": "bg-rose-100 text-rose-800 dark:bg-rose-900 dark:text-rose-200",
       "Operações": "bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-200",
       "Produto": "bg-violet-100 text-violet-800 dark:bg-violet-900 dark:text-violet-200",
+      "Projetos": "bg-lime-100 text-lime-800 dark:bg-lime-900 dark:text-lime-200",
       "Recursos Humanos": "bg-fuchsia-100 text-fuchsia-800 dark:bg-fuchsia-900 dark:text-fuchsia-200",
       "Tecnologia": "bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200",
       "Vendas": "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
@@ -353,6 +354,7 @@ export const CandidateTable = ({
                 <SelectItem value="Marketing">Marketing</SelectItem>
                 <SelectItem value="Operações">Operações</SelectItem>
                 <SelectItem value="Produto">Produto</SelectItem>
+                <SelectItem value="Projetos">Projetos</SelectItem>
                 <SelectItem value="Recursos Humanos">Recursos Humanos</SelectItem>
                 <SelectItem value="Tecnologia">Tecnologia</SelectItem>
                 <SelectItem value="Vendas">Vendas</SelectItem>
