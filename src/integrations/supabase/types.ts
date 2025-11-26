@@ -14,6 +14,73 @@ export type Database = {
   }
   public: {
     Tables: {
+      candidate_documents: {
+        Row: {
+          candidate_id: string
+          created_at: string | null
+          file_name: string
+          file_path: string
+          file_size: number
+          id: string
+        }
+        Insert: {
+          candidate_id: string
+          created_at?: string | null
+          file_name: string
+          file_path: string
+          file_size: number
+          id?: string
+        }
+        Update: {
+          candidate_id?: string
+          created_at?: string | null
+          file_name?: string
+          file_path?: string
+          file_size?: number
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "candidate_documents_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "candidates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      candidate_meetings: {
+        Row: {
+          candidate_id: string
+          created_at: string | null
+          id: string
+          meeting_date: string
+          notes: string | null
+        }
+        Insert: {
+          candidate_id: string
+          created_at?: string | null
+          id?: string
+          meeting_date: string
+          notes?: string | null
+        }
+        Update: {
+          candidate_id?: string
+          created_at?: string | null
+          id?: string
+          meeting_date?: string
+          notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "candidate_meetings_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "candidates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       candidates: {
         Row: {
           area: string
