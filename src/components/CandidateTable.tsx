@@ -859,6 +859,7 @@ export const CandidateTable = ({
           onOpenChange={(open) => !open && setFolderCandidate(null)}
           candidateId={folderCandidate.id}
           candidateName={folderCandidate.name}
+          candidateEmail={folderCandidate.email}
         />
       )}
 

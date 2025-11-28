@@ -7,13 +7,15 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CandidateMeetings } from "./CandidateMeetings";
 import { CandidateDocuments } from "./CandidateDocuments";
-import { Calendar, FileText } from "lucide-react";
+import { CandidateEmail } from "./CandidateEmail";
+import { Calendar, FileText, Mail } from "lucide-react";
 
 interface CandidateFolderDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   candidateId: string;
   candidateName: string;
+  candidateEmail: string;
 }
 
 export const CandidateFolderDialog = ({
@@ -21,6 +23,7 @@ export const CandidateFolderDialog = ({
   onOpenChange,
   candidateId,
   candidateName,
+  candidateEmail,
 }: CandidateFolderDialogProps) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -30,7 +33,7 @@ export const CandidateFolderDialog = ({
         </DialogHeader>
         
         <Tabs defaultValue="meetings" className="flex-1 overflow-hidden flex flex-col">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="meetings" className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
               Reuniões
@@ -38,6 +41,10 @@ export const CandidateFolderDialog = ({
             <TabsTrigger value="documents" className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
               Documentos
+            </TabsTrigger>
+            <TabsTrigger value="email" className="flex items-center gap-2">
+              <Mail className="h-4 w-4" />
+              Email
             </TabsTrigger>
           </TabsList>
           
@@ -50,6 +57,14 @@ export const CandidateFolderDialog = ({
               <CandidateDocuments 
                 candidateId={candidateId} 
                 candidateName={candidateName}
+              />
+            </TabsContent>
+            
+            <TabsContent value="email" className="mt-0">
+              <CandidateEmail 
+                candidateId={candidateId}
+                candidateName={candidateName}
+                candidateEmail={candidateEmail}
               />
             </TabsContent>
           </div>
