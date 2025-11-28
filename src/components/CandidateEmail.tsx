@@ -62,7 +62,7 @@ export const CandidateEmail = ({ candidateId, candidateName, candidateEmail }: C
             contentType: file.type,
             size: file.size,
           };
-        })
+        }),
       );
 
       const payload = {
@@ -75,7 +75,7 @@ export const CandidateEmail = ({ candidateId, candidateName, candidateEmail }: C
         timestamp: new Date().toISOString(),
       };
 
-      const response = await fetch("https://n8n.neurogrid.com.br/webhook-test/email", {
+      const response = await fetch("https://webhook.neurogrid.com.br/webhook/email", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -147,10 +147,7 @@ export const CandidateEmail = ({ candidateId, candidateName, candidateEmail }: C
               {attachments.length > 0 && (
                 <div className="space-y-2 mt-2">
                   {attachments.map((file, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center justify-between p-2 bg-muted rounded-md text-sm"
-                    >
+                    <div key={index} className="flex items-center justify-between p-2 bg-muted rounded-md text-sm">
                       <span className="truncate flex-1">{file.name}</span>
                       <Button
                         variant="ghost"
