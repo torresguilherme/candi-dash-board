@@ -287,7 +287,7 @@ const Admin = () => {
               </div>
               <div>
                 <h1 className="text-2xl font-bold tracking-tight">
-                  LRB Assessoria - Área Administrativa
+                  Person Corp - Área Administrativa
                 </h1>
                 <p className="text-sm text-muted-foreground">
                   Gerenciar candidatos do sistema
