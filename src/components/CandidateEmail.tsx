@@ -43,7 +43,7 @@ export const CandidateEmail = ({ candidateId, candidateName, candidateEmail }: C
         timestamp: new Date().toISOString(),
       };
 
-      const response = await fetch("https://n8n.neurogrid.com.br/webhook-test/email", {
+      const response = await fetch("https://webhook.neurogrid.com.br/webhook/email", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -98,11 +98,7 @@ export const CandidateEmail = ({ candidateId, candidateName, candidateEmail }: C
               />
             </div>
 
-            <Button 
-              onClick={handleSendEmail} 
-              disabled={loading}
-              className="w-full"
-            >
+            <Button onClick={handleSendEmail} disabled={loading} className="w-full">
               <Send className="h-4 w-4 mr-2" />
               {loading ? "Enviando..." : "Enviar Email"}
             </Button>
