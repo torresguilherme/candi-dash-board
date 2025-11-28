@@ -94,7 +94,7 @@ const Index = () => {
         <header className="border-b bg-card shadow-sm">
           <div className="container mx-auto px-4 py-3">
             <div className="flex items-center gap-3">
-              <img src={logo} alt="LRB Assessoria" className="h-10" />
+              <img src={logo} alt="Person Corp" className="h-10" />
             </div>
           </div>
         </header>
@@ -144,7 +144,7 @@ const Index = () => {
       <header className="border-b bg-card shadow-sm">
         <div className="container mx-auto px-4 py-3">
           <div className="flex items-center gap-3">
-            <img src={logo} alt="LRB Assessoria" className="h-10" />
+            <img src={logo} alt="Person Corp" className="h-10" />
           </div>
         </div>
       </header>

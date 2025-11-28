@@ -120,7 +120,7 @@ const Auth = () => {
             </div>
           </div>
           <div className="text-center">
-            <CardTitle className="text-2xl">LRB Assessoria</CardTitle>
+            <CardTitle className="text-2xl">Person Corp</CardTitle>
             <CardDescription>
               {isLogin ? "Entre na sua conta" : "Crie sua conta"}
             </CardDescription>
