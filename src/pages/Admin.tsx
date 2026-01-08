@@ -14,8 +14,8 @@ import {
   Clock, 
   AlertTriangle,
   CheckCircle2,
-  XCircle,
-  TrendingUp
+  TrendingUp,
+  DollarSign
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { CandidateForm } from "@/components/CandidateForm";
@@ -23,29 +23,13 @@ import { AdminHeader } from "@/components/admin/AdminHeader";
 import { StatsCard } from "@/components/admin/StatsCard";
 import { EmptyState } from "@/components/admin/EmptyState";
 import { LoadingSkeleton } from "@/components/admin/LoadingSkeleton";
-import { CandidateTable, Candidate } from "@/components/CandidateTable";
-
-interface Client {
-  id: string;
-  full_name: string;
-  email: string;
-  phone: string | null;
-  area_of_interest: string | null;
-  status: string;
-  region: string | null;
-  resume_url: string | null;
-  linkedin_url: string | null;
-  created_at: string;
-  cpf: string | null;
-  photo_url: string | null;
-  education: string | null;
-}
+import { ClientTable, Client } from "@/components/ClientTable";
 
 const Admin = () => {
   const { user, isAdmin, loading, signOut } = useAuth();
   const [clients, setClients] = useState<Client[]>([]);
   const [loadingClients, setLoadingClients] = useState(true);
-  const [isAddingCandidate, setIsAddingCandidate] = useState(false);
+  const [isAddingClient, setIsAddingClient] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -84,8 +68,8 @@ const Admin = () => {
     } catch (error: any) {
       console.error('Error fetching clients:', error);
       toast({
-        title: "Erro ao carregar candidatos",
-        description: "Não foi possível carregar a lista de candidatos. Tente novamente.",
+        title: "Erro ao carregar clientes",
+        description: "Não foi possível carregar a lista de clientes. Tente novamente.",
         variant: "destructive",
       });
     } finally {
@@ -93,9 +77,9 @@ const Admin = () => {
     }
   };
 
-  const uploadResume = async (file: File, userId: string, candidateId: string) => {
+  const uploadResume = async (file: File, userId: string, clientId: string) => {
     const fileExt = file.name.split('.').pop();
-    const fileName = `${userId}/${candidateId}.${fileExt}`;
+    const fileName = `${userId}/${clientId}.${fileExt}`;
 
     const { error: uploadError } = await supabase.storage
       .from('resumes')
@@ -110,7 +94,7 @@ const Admin = () => {
     return publicUrl;
   };
 
-  const handleEditCandidate = async (id: string, data: CandidateFormData) => {
+  const handleEditClient = async (id: string, data: CandidateFormData) => {
     if (!user || !isAdmin) return;
 
     try {
@@ -141,21 +125,21 @@ const Admin = () => {
       if (error) throw error;
 
       toast({
-        title: "Candidato atualizado com sucesso!",
+        title: "Cliente atualizado com sucesso!",
       });
 
       fetchClients();
     } catch (error: any) {
-      console.error('Error updating candidate:', error);
+      console.error('Error updating client:', error);
       toast({
-        title: "Erro ao atualizar candidato",
+        title: "Erro ao atualizar cliente",
         description: error.message,
         variant: "destructive",
       });
     }
   };
 
-  const handleDeleteCandidate = async (id: string) => {
+  const handleDeleteClient = async (id: string) => {
     if (!user || !isAdmin) return;
 
     try {
@@ -167,21 +151,21 @@ const Admin = () => {
       if (error) throw error;
 
       toast({
-        title: "Candidato excluído com sucesso!",
+        title: "Cliente excluído com sucesso!",
       });
 
       fetchClients();
     } catch (error: any) {
-      console.error('Error deleting candidate:', error);
+      console.error('Error deleting client:', error);
       toast({
-        title: "Erro ao excluir candidato",
+        title: "Erro ao excluir cliente",
         description: error.message,
         variant: "destructive",
       });
     }
   };
 
-  const handleAddCandidate = async (data: CandidateFormData) => {
+  const handleAddClient = async (data: CandidateFormData) => {
     if (!user || !isAdmin) return;
 
     try {
@@ -208,15 +192,15 @@ const Admin = () => {
       if (error) throw error;
 
       toast({
-        title: "Candidato adicionado com sucesso!",
+        title: "Cliente adicionado com sucesso!",
       });
 
-      setIsAddingCandidate(false);
+      setIsAddingClient(false);
       fetchClients();
     } catch (error: any) {
-      console.error('Error adding candidate:', error);
+      console.error('Error adding client:', error);
       toast({
-        title: "Erro ao adicionar candidato",
+        title: "Erro ao adicionar cliente",
         description: error.message,
         variant: "destructive",
       });
@@ -235,6 +219,9 @@ const Admin = () => {
       if (error) throw error;
 
       fetchClients();
+      toast({
+        title: "Status atualizado com sucesso!",
+      });
     } catch (error: any) {
       console.error('Error updating status:', error);
       toast({
@@ -257,29 +244,17 @@ const Admin = () => {
       if (error) throw error;
 
       fetchClients();
-    } catch (error: any) {
-      console.error('Error deleting candidates:', error);
       toast({
-        title: "Erro ao excluir candidatos",
+        title: "Clientes excluídos com sucesso!",
+      });
+    } catch (error: any) {
+      console.error('Error deleting clients:', error);
+      toast({
+        title: "Erro ao excluir clientes",
         description: error.message,
         variant: "destructive",
       });
     }
-  };
-
-  const transformClients = (dbClients: Client[]): Candidate[] => {
-    return dbClients.map(c => ({
-      id: c.id,
-      name: c.full_name,
-      email: c.email,
-      phone: c.phone || "",
-      area: c.area_of_interest || "Não informado",
-      status: c.status,
-      city: c.region || "Não informado",
-      linkedin_url: c.linkedin_url,
-      resume_url: c.resume_url,
-      registrationDate: new Date(c.created_at),
-    }));
   };
 
   // Calculate statistics
@@ -287,11 +262,11 @@ const Admin = () => {
     total: clients.length,
     areas: new Set(clients.map(c => c.area_of_interest).filter(Boolean)).size,
     cities: new Set(clients.map(c => c.region).filter(Boolean)).size,
-    inProcess: clients.filter(c => c.status === "Em Análise" || c.status === "Entrevista Agendada").length,
+    inProcess: clients.filter(c => c.status === "Em Processo" || c.status === "Em Análise").length,
     incomplete: clients.filter(c => !c.cpf || !c.phone || !c.resume_url).length,
-    approved: clients.filter(c => c.status === "Aprovado").length,
-    rejected: clients.filter(c => c.status === "Rejeitado").length,
-    newCandidates: clients.filter(c => c.status === "Novo").length,
+    active: clients.filter(c => c.status === "Ativo" || c.status === "Aprovado").length,
+    newClients: clients.filter(c => c.status === "Novo").length,
+    totalValue: clients.reduce((sum, c) => sum + (c.contract_value || 0), 0),
   };
 
   if (loading || loadingClients) {
@@ -310,129 +285,130 @@ const Admin = () => {
         {/* Page Title */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h2 className="text-2xl font-bold tracking-tight">Dashboard</h2>
+            <h2 className="text-2xl font-bold tracking-tight">Dashboard de Clientes</h2>
             <p className="text-muted-foreground">
-              Gerencie candidatos e clientes do sistema
+              Gerencie sua base de clientes da Person Corp
             </p>
           </div>
+          <Dialog open={isAddingClient} onOpenChange={setIsAddingClient}>
+            <DialogTrigger asChild>
+              <Button size="lg" className="hidden sm:flex">
+                <UserPlus className="h-5 w-5 mr-2" />
+                Novo Cliente
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Adicionar Novo Cliente</DialogTitle>
+              </DialogHeader>
+              <CandidateForm onSubmit={handleAddClient} />
+            </DialogContent>
+          </Dialog>
         </div>
 
-        {/* Statistics Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        {/* Statistics Cards - Top Row */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
           <StatsCard
-            title="Total de Candidatos"
+            title="Total de Clientes"
             value={stats.total}
             icon={Users}
             colorClass="text-primary bg-primary/10"
           />
           <StatsCard
-            title="Áreas Diferentes"
-            value={stats.areas}
-            icon={Briefcase}
-            colorClass="text-blue-600 bg-blue-100 dark:text-blue-400 dark:bg-blue-950"
-          />
-          <StatsCard
-            title="Cidades Diferentes"
-            value={stats.cities}
-            icon={MapPin}
+            title="Clientes Ativos"
+            value={stats.active}
+            icon={CheckCircle2}
             colorClass="text-green-600 bg-green-100 dark:text-green-400 dark:bg-green-950"
           />
           <StatsCard
             title="Em Processo"
             value={stats.inProcess}
             icon={Clock}
-            colorClass="text-orange-600 bg-orange-100 dark:text-orange-400 dark:bg-orange-950"
+            colorClass="text-amber-600 bg-amber-100 dark:text-amber-400 dark:bg-amber-950"
+          />
+          <StatsCard
+            title="Novos"
+            value={stats.newClients}
+            icon={TrendingUp}
+            colorClass="text-blue-600 bg-blue-100 dark:text-blue-400 dark:bg-blue-950"
           />
           <StatsCard
             title="Cadastros Incompletos"
             value={stats.incomplete}
             icon={AlertTriangle}
-            colorClass="text-red-600 bg-red-100 dark:text-red-400 dark:bg-red-950"
+            colorClass="text-orange-600 bg-orange-100 dark:text-orange-400 dark:bg-orange-950"
           />
         </div>
 
-        {/* Quick Stats Row */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <Card className="border-0 shadow-sm">
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-950">
-                <TrendingUp className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+        {/* Secondary Stats Row */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+          <Card className="border-0 shadow-sm bg-gradient-to-br from-card to-muted/20">
+            <CardContent className="p-5 flex items-center gap-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
+                <Briefcase className="h-6 w-6 text-primary" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{stats.newCandidates}</p>
-                <p className="text-xs text-muted-foreground">Novos</p>
+                <p className="text-3xl font-bold">{stats.areas}</p>
+                <p className="text-sm text-muted-foreground">Áreas de Atuação</p>
               </div>
             </CardContent>
           </Card>
-          <Card className="border-0 shadow-sm">
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-950">
-                <Clock className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+          <Card className="border-0 shadow-sm bg-gradient-to-br from-card to-muted/20">
+            <CardContent className="p-5 flex items-center gap-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-green-100 dark:bg-green-950">
+                <MapPin className="h-6 w-6 text-green-600 dark:text-green-400" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{stats.inProcess}</p>
-                <p className="text-xs text-muted-foreground">Em Análise</p>
+                <p className="text-3xl font-bold">{stats.cities}</p>
+                <p className="text-sm text-muted-foreground">Cidades</p>
               </div>
             </CardContent>
           </Card>
-          <Card className="border-0 shadow-sm">
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100 dark:bg-green-950">
-                <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{stats.approved}</p>
-                <p className="text-xs text-muted-foreground">Aprovados</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="border-0 shadow-sm">
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-100 dark:bg-red-950">
-                <XCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{stats.rejected}</p>
-                <p className="text-xs text-muted-foreground">Rejeitados</p>
-              </div>
-            </CardContent>
-          </Card>
+          {stats.totalValue > 0 && (
+            <Card className="border-0 shadow-sm bg-gradient-to-br from-card to-muted/20">
+              <CardContent className="p-5 flex items-center gap-4">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-100 dark:bg-emerald-950">
+                  <DollarSign className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
+                </div>
+                <div>
+                  <p className="text-3xl font-bold">
+                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(stats.totalValue)}
+                  </p>
+                  <p className="text-sm text-muted-foreground">Valor Total</p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
 
-        {/* Candidates Table */}
-        <Card className="border-0 shadow-sm">
-          <CardHeader className="pb-4">
+        {/* Clients Table */}
+        <Card className="border-0 shadow-sm overflow-hidden">
+          <CardHeader className="pb-4 bg-gradient-to-r from-card to-muted/10">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
-                <CardTitle className="text-xl">Lista de Candidatos</CardTitle>
+                <CardTitle className="text-xl">Lista de Clientes</CardTitle>
                 <CardDescription>
-                  Visualize, edite e gerencie todos os candidatos cadastrados
+                  Visualize, edite e gerencie todos os clientes cadastrados
                 </CardDescription>
               </div>
-              <Dialog open={isAddingCandidate} onOpenChange={setIsAddingCandidate}>
+              <Dialog open={isAddingClient} onOpenChange={setIsAddingClient}>
                 <DialogTrigger asChild>
-                  <Button className="w-full sm:w-auto">
+                  <Button className="w-full sm:w-auto sm:hidden">
                     <UserPlus className="h-4 w-4 mr-2" />
-                    Novo Candidato
+                    Novo Cliente
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                  <DialogHeader>
-                    <DialogTitle>Adicionar Novo Candidato</DialogTitle>
-                  </DialogHeader>
-                  <CandidateForm onSubmit={handleAddCandidate} />
-                </DialogContent>
               </Dialog>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-6">
             {clients.length === 0 ? (
-              <EmptyState onAddCandidate={() => setIsAddingCandidate(true)} />
+              <EmptyState onAddCandidate={() => setIsAddingClient(true)} />
             ) : (
-              <CandidateTable
-                candidates={transformClients(clients)}
-                onEdit={handleEditCandidate}
-                onDelete={handleDeleteCandidate}
+              <ClientTable
+                clients={clients}
+                onEdit={handleEditClient}
+                onDelete={handleDeleteClient}
                 onBulkStatusChange={handleBulkStatusChange}
                 onBulkDelete={handleBulkDelete}
               />
