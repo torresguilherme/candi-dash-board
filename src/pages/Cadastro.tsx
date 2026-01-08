@@ -37,16 +37,17 @@ const Cadastro = () => {
         resumeUrl = await uploadResume(data.resume, candidateId);
       }
 
-      const { error } = await supabase.from("candidates").insert({
+      const { error } = await supabase.from("clients").insert({
         id: candidateId,
         user_id: null,
-        name: data.name,
+        full_name: data.name,
         email: data.email,
         phone: data.phone,
-        area: data.area,
-        city: data.city,
+        area_of_interest: data.area,
+        region: data.city,
         linkedin_url: data.linkedin_url || null,
         resume_url: resumeUrl,
+        status: "Novo",
       });
 
       if (error) throw error;
@@ -72,7 +73,6 @@ const Cadastro = () => {
         });
       } catch (webhookError) {
         console.error("Error sending to webhook:", webhookError);
-        // Don't throw - we don't want to fail the submission if webhook fails
       }
 
       setSubmitted(true);

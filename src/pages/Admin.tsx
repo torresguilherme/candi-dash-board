@@ -2,32 +2,49 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { CandidateTable } from "@/components/CandidateTable";
 import { CandidateFormData } from "@/components/CandidateForm";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Users, LogOut, UserPlus, MapPin, Briefcase } from "lucide-react";
+import { 
+  Users, 
+  UserPlus, 
+  MapPin, 
+  Briefcase, 
+  Clock, 
+  AlertTriangle,
+  CheckCircle2,
+  XCircle,
+  TrendingUp
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { CandidateForm } from "@/components/CandidateForm";
+import { AdminHeader } from "@/components/admin/AdminHeader";
+import { StatsCard } from "@/components/admin/StatsCard";
+import { EmptyState } from "@/components/admin/EmptyState";
+import { LoadingSkeleton } from "@/components/admin/LoadingSkeleton";
+import { CandidateTable, Candidate } from "@/components/CandidateTable";
 
-interface Candidate {
+interface Client {
   id: string;
-  name: string;
+  full_name: string;
   email: string;
-  phone: string;
-  area: string;
+  phone: string | null;
+  area_of_interest: string | null;
   status: string;
-  city: string;
+  region: string | null;
   resume_url: string | null;
   linkedin_url: string | null;
-  registration_date: string;
+  created_at: string;
+  cpf: string | null;
+  photo_url: string | null;
+  education: string | null;
 }
 
 const Admin = () => {
   const { user, isAdmin, loading, signOut } = useAuth();
-  const [candidates, setCandidates] = useState<Candidate[]>([]);
-  const [loadingCandidates, setLoadingCandidates] = useState(true);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [loadingClients, setLoadingClients] = useState(true);
   const [isAddingCandidate, setIsAddingCandidate] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -49,30 +66,30 @@ const Admin = () => {
 
   useEffect(() => {
     if (user && isAdmin) {
-      fetchCandidates();
+      fetchClients();
     }
   }, [user, isAdmin]);
 
-  const fetchCandidates = async () => {
+  const fetchClients = async () => {
     try {
-      setLoadingCandidates(true);
+      setLoadingClients(true);
       const { data, error } = await supabase
-        .from('candidates')
+        .from('clients')
         .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
 
-      setCandidates(data || []);
+      setClients(data || []);
     } catch (error: any) {
-      console.error('Error fetching candidates:', error);
+      console.error('Error fetching clients:', error);
       toast({
         title: "Erro ao carregar candidatos",
-        description: error.message,
+        description: "Não foi possível carregar a lista de candidatos. Tente novamente.",
         variant: "destructive",
       });
     } finally {
-      setLoadingCandidates(false);
+      setLoadingClients(false);
     }
   };
 
@@ -104,11 +121,11 @@ const Admin = () => {
       }
 
       const updateData: any = {
-        name: data.name,
+        full_name: data.name,
         email: data.email,
         phone: data.phone,
-        area: data.area,
-        city: data.city,
+        area_of_interest: data.area,
+        region: data.city,
         linkedin_url: data.linkedin_url || null,
       };
 
@@ -117,7 +134,7 @@ const Admin = () => {
       }
 
       const { error } = await supabase
-        .from('candidates')
+        .from('clients')
         .update(updateData)
         .eq('id', id);
 
@@ -127,7 +144,7 @@ const Admin = () => {
         title: "Candidato atualizado com sucesso!",
       });
 
-      fetchCandidates();
+      fetchClients();
     } catch (error: any) {
       console.error('Error updating candidate:', error);
       toast({
@@ -143,7 +160,7 @@ const Admin = () => {
 
     try {
       const { error } = await supabase
-        .from('candidates')
+        .from('clients')
         .delete()
         .eq('id', id);
 
@@ -153,7 +170,7 @@ const Admin = () => {
         title: "Candidato excluído com sucesso!",
       });
 
-      fetchCandidates();
+      fetchClients();
     } catch (error: any) {
       console.error('Error deleting candidate:', error);
       toast({
@@ -175,16 +192,17 @@ const Admin = () => {
       }
 
       const { error } = await supabase
-        .from('candidates')
+        .from('clients')
         .insert({
-          name: data.name,
+          full_name: data.name,
           email: data.email,
           phone: data.phone,
-          area: data.area,
-          city: data.city,
+          area_of_interest: data.area,
+          region: data.city,
           linkedin_url: data.linkedin_url || null,
           resume_url: resumeUrl,
           user_id: user.id,
+          status: "Novo",
         });
 
       if (error) throw error;
@@ -194,7 +212,7 @@ const Admin = () => {
       });
 
       setIsAddingCandidate(false);
-      fetchCandidates();
+      fetchClients();
     } catch (error: any) {
       console.error('Error adding candidate:', error);
       toast({
@@ -210,13 +228,13 @@ const Admin = () => {
 
     try {
       const { error } = await supabase
-        .from('candidates')
+        .from('clients')
         .update({ status: newStatus })
         .in('id', ids);
 
       if (error) throw error;
 
-      fetchCandidates();
+      fetchClients();
     } catch (error: any) {
       console.error('Error updating status:', error);
       toast({
@@ -232,13 +250,13 @@ const Admin = () => {
 
     try {
       const { error } = await supabase
-        .from('candidates')
+        .from('clients')
         .delete()
         .in('id', ids);
 
       if (error) throw error;
 
-      fetchCandidates();
+      fetchClients();
     } catch (error: any) {
       console.error('Error deleting candidates:', error);
       toast({
@@ -249,27 +267,35 @@ const Admin = () => {
     }
   };
 
-  const transformCandidates = (dbCandidates: Candidate[]) => {
-    return dbCandidates.map(c => ({
+  const transformClients = (dbClients: Client[]): Candidate[] => {
+    return dbClients.map(c => ({
       id: c.id,
-      name: c.name,
+      name: c.full_name,
       email: c.email,
-      phone: c.phone,
-      area: c.area,
+      phone: c.phone || "",
+      area: c.area_of_interest || "Não informado",
       status: c.status,
-      city: c.city,
+      city: c.region || "Não informado",
       linkedin_url: c.linkedin_url,
       resume_url: c.resume_url,
-      registrationDate: new Date(c.registration_date),
+      registrationDate: new Date(c.created_at),
     }));
   };
 
-  if (loading || loadingCandidates) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <p className="text-muted-foreground">Carregando...</p>
-      </div>
-    );
+  // Calculate statistics
+  const stats = {
+    total: clients.length,
+    areas: new Set(clients.map(c => c.area_of_interest).filter(Boolean)).size,
+    cities: new Set(clients.map(c => c.region).filter(Boolean)).size,
+    inProcess: clients.filter(c => c.status === "Em Análise" || c.status === "Entrevista Agendada").length,
+    incomplete: clients.filter(c => !c.cpf || !c.phone || !c.resume_url).length,
+    approved: clients.filter(c => c.status === "Aprovado").length,
+    rejected: clients.filter(c => c.status === "Rejeitado").length,
+    newCandidates: clients.filter(c => c.status === "Novo").length,
+  };
+
+  if (loading || loadingClients) {
+    return <LoadingSkeleton />;
   }
 
   if (!user || !isAdmin) {
@@ -277,87 +303,110 @@ const Admin = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b bg-card shadow-sm">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                <Users className="h-6 w-6" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold tracking-tight">
-                  Person Corp - Área Administrativa
-                </h1>
-                <p className="text-sm text-muted-foreground">
-                  Gerenciar candidatos do sistema
-                </p>
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={() => navigate("/cadastro")}>
-                <UserPlus className="h-4 w-4 mr-2" />
-                Cadastro
-              </Button>
-              <Button variant="outline" onClick={signOut}>
-                <LogOut className="h-4 w-4 mr-2" />
-                Sair
-              </Button>
-            </div>
+    <div className="min-h-screen bg-muted/30">
+      <AdminHeader onSignOut={signOut} />
+
+      <main className="container mx-auto px-4 py-6 space-y-6">
+        {/* Page Title */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight">Dashboard</h2>
+            <p className="text-muted-foreground">
+              Gerencie candidatos e clientes do sistema
+            </p>
           </div>
         </div>
-      </header>
 
-      <main className="container mx-auto px-4 py-8 space-y-6">
         {/* Statistics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardDescription>Total de Candidatos</CardDescription>
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                  <Users className="h-5 w-5 text-primary" />
-                </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          <StatsCard
+            title="Total de Candidatos"
+            value={stats.total}
+            icon={Users}
+            colorClass="text-primary bg-primary/10"
+          />
+          <StatsCard
+            title="Áreas Diferentes"
+            value={stats.areas}
+            icon={Briefcase}
+            colorClass="text-blue-600 bg-blue-100 dark:text-blue-400 dark:bg-blue-950"
+          />
+          <StatsCard
+            title="Cidades Diferentes"
+            value={stats.cities}
+            icon={MapPin}
+            colorClass="text-green-600 bg-green-100 dark:text-green-400 dark:bg-green-950"
+          />
+          <StatsCard
+            title="Em Processo"
+            value={stats.inProcess}
+            icon={Clock}
+            colorClass="text-orange-600 bg-orange-100 dark:text-orange-400 dark:bg-orange-950"
+          />
+          <StatsCard
+            title="Cadastros Incompletos"
+            value={stats.incomplete}
+            icon={AlertTriangle}
+            colorClass="text-red-600 bg-red-100 dark:text-red-400 dark:bg-red-950"
+          />
+        </div>
+
+        {/* Quick Stats Row */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <Card className="border-0 shadow-sm">
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-950">
+                <TrendingUp className="h-5 w-5 text-blue-600 dark:text-blue-400" />
               </div>
-              <CardTitle className="text-3xl">{candidates.length}</CardTitle>
-            </CardHeader>
+              <div>
+                <p className="text-2xl font-bold">{stats.newCandidates}</p>
+                <p className="text-xs text-muted-foreground">Novos</p>
+              </div>
+            </CardContent>
           </Card>
-          <Card className="border-blue-500/20 bg-gradient-to-br from-blue-500/5 to-transparent">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardDescription>Áreas Diferentes</CardDescription>
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/10">
-                  <Briefcase className="h-5 w-5 text-blue-500" />
-                </div>
+          <Card className="border-0 shadow-sm">
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-950">
+                <Clock className="h-5 w-5 text-amber-600 dark:text-amber-400" />
               </div>
-              <CardTitle className="text-3xl">
-                {new Set(candidates.map(c => c.area)).size}
-              </CardTitle>
-            </CardHeader>
+              <div>
+                <p className="text-2xl font-bold">{stats.inProcess}</p>
+                <p className="text-xs text-muted-foreground">Em Análise</p>
+              </div>
+            </CardContent>
           </Card>
-          <Card className="border-green-500/20 bg-gradient-to-br from-green-500/5 to-transparent">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardDescription>Cidades Diferentes</CardDescription>
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-500/10">
-                  <MapPin className="h-5 w-5 text-green-500" />
-                </div>
+          <Card className="border-0 shadow-sm">
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100 dark:bg-green-950">
+                <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
               </div>
-              <CardTitle className="text-3xl">
-                {new Set(candidates.map(c => c.city)).size}
-              </CardTitle>
-            </CardHeader>
+              <div>
+                <p className="text-2xl font-bold">{stats.approved}</p>
+                <p className="text-xs text-muted-foreground">Aprovados</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="border-0 shadow-sm">
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-100 dark:bg-red-950">
+                <XCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{stats.rejected}</p>
+                <p className="text-xs text-muted-foreground">Rejeitados</p>
+              </div>
+            </CardContent>
           </Card>
         </div>
 
         {/* Candidates Table */}
-        <Card>
-          <CardHeader>
+        <Card className="border-0 shadow-sm">
+          <CardHeader className="pb-4">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
-                <CardTitle>Lista de Candidatos</CardTitle>
+                <CardTitle className="text-xl">Lista de Candidatos</CardTitle>
                 <CardDescription>
-                  Gerencie todos os candidatos cadastrados no sistema
+                  Visualize, edite e gerencie todos os candidatos cadastrados
                 </CardDescription>
               </div>
               <Dialog open={isAddingCandidate} onOpenChange={setIsAddingCandidate}>
@@ -377,13 +426,17 @@ const Admin = () => {
             </div>
           </CardHeader>
           <CardContent>
-            <CandidateTable
-              candidates={transformCandidates(candidates)}
-              onEdit={handleEditCandidate}
-              onDelete={handleDeleteCandidate}
-              onBulkStatusChange={handleBulkStatusChange}
-              onBulkDelete={handleBulkDelete}
-            />
+            {clients.length === 0 ? (
+              <EmptyState onAddCandidate={() => setIsAddingCandidate(true)} />
+            ) : (
+              <CandidateTable
+                candidates={transformClients(clients)}
+                onEdit={handleEditCandidate}
+                onDelete={handleDeleteCandidate}
+                onBulkStatusChange={handleBulkStatusChange}
+                onBulkDelete={handleBulkDelete}
+              />
+            )}
           </CardContent>
         </Card>
       </main>

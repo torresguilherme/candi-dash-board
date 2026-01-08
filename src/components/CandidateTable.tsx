@@ -1,6 +1,23 @@
 import { useState, useMemo } from "react";
 import { format } from "date-fns";
-import { Pencil, Trash2, Search, ArrowUpDown, FileText, ExternalLink, Download, Eye, ChevronLeft, ChevronRight, FileDown, FolderOpen } from "lucide-react";
+import { 
+  Pencil, 
+  Trash2, 
+  Search, 
+  ArrowUpDown, 
+  ExternalLink, 
+  Download, 
+  Eye, 
+  ChevronLeft, 
+  ChevronRight, 
+  FileDown, 
+  FolderOpen,
+  MessageCircle,
+  Mail,
+  FileText,
+  MoreHorizontal,
+  Phone
+} from "lucide-react";
 import { toast } from "sonner";
 import {
   Table,
@@ -41,6 +58,14 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { CandidateFolderDialog } from "./CandidateFolderDialog";
+import { CandidateAvatar } from "./admin/CandidateAvatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export interface Candidate extends CandidateFormData {
   id: string;
@@ -285,6 +310,18 @@ export const CandidateTable = ({
     toast.success("Lista exportada com sucesso!");
   };
 
+  const openWhatsApp = (phone: string, name: string) => {
+    const cleanPhone = phone.replace(/\D/g, '');
+    const message = encodeURIComponent(`Olá ${name}, tudo bem?`);
+    window.open(`https://wa.me/55${cleanPhone}?text=${message}`, '_blank');
+  };
+
+  const openEmail = (email: string, name: string) => {
+    const subject = encodeURIComponent(`Person Corp - Contato`);
+    const body = encodeURIComponent(`Olá ${name},\n\n`);
+    window.open(`mailto:${email}?subject=${subject}&body=${body}`, '_blank');
+  };
+
   if (candidates.length === 0) {
     return (
       <div className="text-center py-12 text-muted-foreground">
@@ -413,157 +450,185 @@ export const CandidateTable = ({
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/50 hover:bg-muted/50">
-                  <TableHead className="h-14 w-12">
+                  <TableHead className="h-12 w-12">
                     <Checkbox
                       checked={paginatedCandidates.length > 0 && paginatedCandidates.every(c => selectedCandidates.has(c.id))}
                       onCheckedChange={handleSelectAll}
                     />
                   </TableHead>
-                  <TableHead className="h-14 whitespace-nowrap">
+                  <TableHead className="h-12 whitespace-nowrap">
                     <button
                       onClick={() => handleSort("name")}
                       className="flex items-center font-semibold hover:text-foreground transition-colors"
                     >
-                      Nome Completo
+                      Candidato
                       <ArrowUpDown className="ml-2 h-4 w-4" />
                     </button>
                   </TableHead>
-                  <TableHead className="h-14 whitespace-nowrap">
-                    <button
-                      onClick={() => handleSort("email")}
-                      className="flex items-center font-semibold hover:text-foreground transition-colors"
-                    >
-                      E-mail
-                      <ArrowUpDown className="ml-2 h-4 w-4" />
-                    </button>
-                  </TableHead>
-                  <TableHead className="h-14 font-semibold whitespace-nowrap">Telefone</TableHead>
-                  <TableHead className="h-14 font-semibold whitespace-nowrap">Área de Interesse</TableHead>
-                  <TableHead className="h-14 font-semibold whitespace-nowrap">Cidade</TableHead>
-                  <TableHead className="h-14 font-semibold whitespace-nowrap">Status</TableHead>
-                  <TableHead className="h-14 font-semibold whitespace-nowrap">LinkedIn</TableHead>
-                  <TableHead className="h-14 font-semibold whitespace-nowrap">Currículo</TableHead>
-                  <TableHead className="h-14 font-semibold whitespace-nowrap">Pasta</TableHead>
-                  <TableHead className="text-center h-14 font-semibold whitespace-nowrap">Ações</TableHead>
+                  <TableHead className="h-12 font-semibold whitespace-nowrap">Contato</TableHead>
+                  <TableHead className="h-12 font-semibold whitespace-nowrap">Área</TableHead>
+                  <TableHead className="h-12 font-semibold whitespace-nowrap">Cidade</TableHead>
+                  <TableHead className="h-12 font-semibold whitespace-nowrap">Status</TableHead>
+                  <TableHead className="h-12 font-semibold whitespace-nowrap">Documentos</TableHead>
+                  <TableHead className="text-right h-12 font-semibold whitespace-nowrap pr-6">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {paginatedCandidates.map((candidate) => (
-                  <TableRow key={candidate.id} className="hover:bg-muted/30 transition-colors">
-                    <TableCell className="py-5">
+                  <TableRow key={candidate.id} className="hover:bg-muted/30 transition-colors group">
+                    <TableCell className="py-3">
                       <Checkbox
                         checked={selectedCandidates.has(candidate.id)}
                         onCheckedChange={(checked) => handleSelectCandidate(candidate.id, checked as boolean)}
                       />
                     </TableCell>
-                    <TableCell className="font-medium py-5 whitespace-nowrap">
-                      <button
-                        onClick={() => setViewingCandidate(candidate)}
-                        className="hover:text-primary hover:underline transition-colors text-left"
-                      >
-                        {candidate.name}
-                      </button>
+                    <TableCell className="py-3">
+                      <div className="flex items-center gap-3">
+                        <CandidateAvatar name={candidate.name} size="md" />
+                        <div className="min-w-0">
+                          <button
+                            onClick={() => setViewingCandidate(candidate)}
+                            className="font-medium hover:text-primary hover:underline transition-colors text-left block truncate max-w-[200px]"
+                          >
+                            {candidate.name}
+                          </button>
+                          <p className="text-xs text-muted-foreground truncate max-w-[200px]">
+                            {candidate.email}
+                          </p>
+                        </div>
+                      </div>
                     </TableCell>
-                    <TableCell className="py-5 text-muted-foreground whitespace-nowrap">{candidate.email}</TableCell>
-                    <TableCell className="py-5 text-muted-foreground whitespace-nowrap">{candidate.phone}</TableCell>
-                    <TableCell className="py-5 whitespace-nowrap">
-                      <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium whitespace-nowrap ${getAreaColor(candidate.area)}`}>
-                        {candidate.area}
-                      </span>
-                    </TableCell>
-                    <TableCell className="py-5 text-muted-foreground whitespace-nowrap">{candidate.city}</TableCell>
-                    <TableCell className="py-5 whitespace-nowrap">
-                      <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium whitespace-nowrap ${getStatusColor(candidate.status || "Novo")}`}>
-                        {candidate.status || "Novo"}
-                      </span>
-                    </TableCell>
-                     <TableCell className="py-5 whitespace-nowrap">
-                       {candidate.linkedin_url ? (
-                         <a 
-                           href={candidate.linkedin_url} 
-                           target="_blank" 
-                           rel="noopener noreferrer"
-                           className="inline-flex items-center gap-1 text-primary hover:underline"
-                         >
-                           <ExternalLink className="h-4 w-4" />
-                           Perfil
-                         </a>
-                       ) : (
-                         <span className="text-muted-foreground">-</span>
-                       )}
-                     </TableCell>
-                     <TableCell className="py-5 whitespace-nowrap">
-                       {candidate.resume_url ? (
-                         <button
-                           onClick={() => handleDownloadResume(candidate.resume_url!, candidate.name)}
-                           className="inline-flex items-center gap-1 text-primary hover:underline"
-                         >
-                           <Download className="h-4 w-4" />
-                           Baixar PDF
-                         </button>
-                       ) : (
-                         <span className="text-muted-foreground">-</span>
-                       )}
-                      </TableCell>
-                      <TableCell className="py-5">
-                        <TooltipProvider>
+                    <TableCell className="py-3">
+                      <div className="flex items-center gap-1">
+                        {candidate.phone && (
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                onClick={() => setFolderCandidate(candidate)}
-                                className="h-9 w-9 hover:bg-primary/10 hover:text-primary transition-colors"
+                                className="h-8 w-8 text-green-600 hover:bg-green-100 hover:text-green-700 dark:hover:bg-green-950"
+                                onClick={() => openWhatsApp(candidate.phone, candidate.name)}
                               >
-                                <FolderOpen className="h-4 w-4" />
+                                <MessageCircle className="h-4 w-4" />
                               </Button>
                             </TooltipTrigger>
-                            <TooltipContent>Ver pasta do candidato</TooltipContent>
+                            <TooltipContent>WhatsApp</TooltipContent>
                           </Tooltip>
-                        </TooltipProvider>
-                      </TableCell>
-                     <TableCell className="text-center py-5 whitespace-nowrap">
-                      <div className="flex justify-center gap-2">
+                        )}
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Button
                               variant="ghost"
                               size="icon"
-                              onClick={() => setViewingCandidate(candidate)}
-                              className="h-9 w-9 hover:bg-primary/10 hover:text-primary transition-colors"
+                              className="h-8 w-8 text-blue-600 hover:bg-blue-100 hover:text-blue-700 dark:hover:bg-blue-950"
+                              onClick={() => openEmail(candidate.email, candidate.name)}
                             >
-                              <Eye className="h-4 w-4" />
+                              <Mail className="h-4 w-4" />
                             </Button>
                           </TooltipTrigger>
-                          <TooltipContent>Visualizar candidato</TooltipContent>
-                        </Tooltip>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => setEditingCandidate(candidate)}
-                              className="h-9 w-9 hover:bg-primary/10 hover:text-primary transition-colors"
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>Editar candidato</TooltipContent>
-                        </Tooltip>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => setDeletingId(candidate.id)}
-                              className="h-9 w-9 text-destructive hover:bg-destructive/10 hover:text-destructive transition-colors"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>Excluir candidato</TooltipContent>
+                          <TooltipContent>E-mail</TooltipContent>
                         </Tooltip>
                       </div>
+                    </TableCell>
+                    <TableCell className="py-3">
+                      <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getAreaColor(candidate.area)}`}>
+                        {candidate.area}
+                      </span>
+                    </TableCell>
+                    <TableCell className="py-3 text-muted-foreground text-sm">{candidate.city}</TableCell>
+                    <TableCell className="py-3">
+                      <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusColor(candidate.status || "Novo")}`}>
+                        {candidate.status || "Novo"}
+                      </span>
+                    </TableCell>
+                    <TableCell className="py-3">
+                      <div className="flex items-center gap-1">
+                        {candidate.linkedin_url && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                onClick={() => window.open(candidate.linkedin_url!, '_blank')}
+                              >
+                                <ExternalLink className="h-4 w-4 text-blue-600" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>LinkedIn</TooltipContent>
+                          </Tooltip>
+                        )}
+                        {candidate.resume_url && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                onClick={() => handleDownloadResume(candidate.resume_url!, candidate.name)}
+                              >
+                                <FileText className="h-4 w-4 text-orange-600" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Baixar Currículo</TooltipContent>
+                          </Tooltip>
+                        )}
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => setFolderCandidate(candidate)}
+                            >
+                              <FolderOpen className="h-4 w-4 text-purple-600" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Pasta</TooltipContent>
+                        </Tooltip>
+                      </div>
+                    </TableCell>
+                    <TableCell className="py-3 text-right pr-2">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48">
+                          <DropdownMenuItem onClick={() => setViewingCandidate(candidate)}>
+                            <Eye className="h-4 w-4 mr-2" />
+                            Visualizar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setEditingCandidate(candidate)}>
+                            <Pencil className="h-4 w-4 mr-2" />
+                            Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setFolderCandidate(candidate)}>
+                            <FolderOpen className="h-4 w-4 mr-2" />
+                            Ver Pasta
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          {candidate.phone && (
+                            <DropdownMenuItem onClick={() => openWhatsApp(candidate.phone, candidate.name)}>
+                              <MessageCircle className="h-4 w-4 mr-2 text-green-600" />
+                              WhatsApp
+                            </DropdownMenuItem>
+                          )}
+                          <DropdownMenuItem onClick={() => openEmail(candidate.email, candidate.name)}>
+                            <Mail className="h-4 w-4 mr-2 text-blue-600" />
+                            Enviar E-mail
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem 
+                            onClick={() => setDeletingId(candidate.id)}
+                            className="text-destructive focus:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Excluir
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -609,95 +674,104 @@ export const CandidateTable = ({
           )}
 
           {/* Mobile Card View */}
-          <div className="md:hidden space-y-4">
+          <div className="md:hidden space-y-3">
             {paginatedCandidates.map((candidate) => (
               <div
                 key={candidate.id}
                 className="rounded-lg border bg-card p-4 shadow-sm space-y-3"
               >
-                <div className="flex justify-between items-start gap-3">
+                <div className="flex items-start gap-3">
+                  <Checkbox
+                    checked={selectedCandidates.has(candidate.id)}
+                    onCheckedChange={(checked) => handleSelectCandidate(candidate.id, checked as boolean)}
+                    className="mt-1"
+                  />
+                  <CandidateAvatar name={candidate.name} size="md" />
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-base truncate">{candidate.name}</h3>
+                    <button
+                      onClick={() => setViewingCandidate(candidate)}
+                      className="font-semibold text-base truncate block text-left hover:text-primary"
+                    >
+                      {candidate.name}
+                    </button>
                     <p className="text-sm text-muted-foreground truncate">{candidate.email}</p>
                   </div>
+                  <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium shrink-0 ${getStatusColor(candidate.status || "Novo")}`}>
+                    {candidate.status || "Novo"}
+                  </span>
                 </div>
 
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">Telefone:</span>
-                    <span className="font-medium">{candidate.phone}</span>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div>
+                    <span className="text-muted-foreground text-xs">Área</span>
+                    <p className="font-medium truncate">{candidate.area}</p>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">Área:</span>
-                    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getAreaColor(candidate.area)}`}>
-                      {candidate.area}
-                    </span>
+                  <div>
+                    <span className="text-muted-foreground text-xs">Cidade</span>
+                    <p className="font-medium truncate">{candidate.city}</p>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">Status:</span>
-                    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusColor(candidate.status || "Novo")}`}>
-                      {candidate.status || "Novo"}
-                    </span>
-                  </div>
-                   <div className="flex justify-between items-center">
-                     <span className="text-muted-foreground">Cidade:</span>
-                     <span className="font-medium">{candidate.city}</span>
-                   </div>
-                   {candidate.linkedin_url && (
-                     <div className="flex justify-between items-center">
-                       <span className="text-muted-foreground">LinkedIn:</span>
-                       <a 
-                         href={candidate.linkedin_url} 
-                         target="_blank" 
-                         rel="noopener noreferrer"
-                         className="text-primary hover:underline flex items-center gap-1"
-                       >
-                         <ExternalLink className="h-3 w-3" />
-                         Ver perfil
-                       </a>
-                     </div>
-                   )}
-                   {candidate.resume_url && (
-                     <div className="flex justify-between items-center">
-                       <span className="text-muted-foreground">Currículo:</span>
-                       <button
-                         onClick={() => handleDownloadResume(candidate.resume_url!, candidate.name)}
-                         className="text-primary hover:underline flex items-center gap-1"
-                       >
-                         <Download className="h-3 w-3" />
-                         Baixar PDF
-                       </button>
-                     </div>
-                   )}
                 </div>
 
+                {/* Quick Contact Buttons */}
                 <div className="flex gap-2 pt-2 border-t">
+                  {candidate.phone && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => openWhatsApp(candidate.phone, candidate.name)}
+                      className="flex-1 text-green-600 hover:bg-green-50 hover:border-green-300 dark:hover:bg-green-950"
+                    >
+                      <MessageCircle className="h-4 w-4 mr-1" />
+                      WhatsApp
+                    </Button>
+                  )}
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setFolderCandidate(candidate)}
-                    className="flex-1 hover:bg-primary/10 hover:text-primary hover:border-primary transition-colors"
+                    onClick={() => openEmail(candidate.email, candidate.name)}
+                    className="flex-1 text-blue-600 hover:bg-blue-50 hover:border-blue-300 dark:hover:bg-blue-950"
                   >
-                    <FolderOpen className="h-4 w-4 mr-2" />
-                    Pasta
+                    <Mail className="h-4 w-4 mr-1" />
+                    E-mail
+                  </Button>
+                </div>
+
+                {/* Actions */}
+                <div className="flex gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setViewingCandidate(candidate)}
+                    className="flex-1"
+                  >
+                    <Eye className="h-4 w-4 mr-1" />
+                    Ver
                   </Button>
                   <Button
-                    variant="outline"
+                    variant="ghost"
                     size="sm"
                     onClick={() => setEditingCandidate(candidate)}
-                    className="flex-1 hover:bg-primary/10 hover:text-primary hover:border-primary transition-colors"
+                    className="flex-1"
                   >
-                    <Pencil className="h-4 w-4 mr-2" />
+                    <Pencil className="h-4 w-4 mr-1" />
                     Editar
                   </Button>
                   <Button
-                    variant="outline"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setFolderCandidate(candidate)}
+                    className="flex-1"
+                  >
+                    <FolderOpen className="h-4 w-4 mr-1" />
+                    Pasta
+                  </Button>
+                  <Button
+                    variant="ghost"
                     size="sm"
                     onClick={() => setDeletingId(candidate.id)}
-                    className="flex-1 text-destructive hover:bg-destructive/10 hover:border-destructive transition-colors"
+                    className="text-destructive"
                   >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Excluir
+                    <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
