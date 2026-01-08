@@ -335,13 +335,13 @@ const Admin = () => {
                 Novo Cliente
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
-              <DialogHeader>
+            <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0">
+              <DialogHeader className="p-6 pb-0">
                 <DialogTitle>Adicionar Novo Cliente</DialogTitle>
               </DialogHeader>
-              <ScrollArea className="flex-1 pr-4">
+              <div className="flex-1 overflow-y-auto p-6 pt-4">
                 <ClientForm onSubmit={handleAddClient} />
-              </ScrollArea>
+              </div>
             </DialogContent>
           </Dialog>
         </div>

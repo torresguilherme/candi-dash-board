@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -25,13 +25,16 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { 
   User, 
   FileText, 
   Briefcase, 
   Calendar,
   DollarSign,
-  GraduationCap
+  GraduationCap,
+  Camera,
+  X
 } from "lucide-react";
 
 const clientFormSchema = z.object({
@@ -105,6 +108,7 @@ interface ClientFormProps {
   submitButtonText?: string;
   existingEmails?: string[];
   currentEmail?: string;
+  existingPhotoUrl?: string | null;
 }
 
 const regions = [
@@ -144,7 +148,11 @@ export const ClientForm = ({
   submitButtonText = "Salvar Cliente",
   existingEmails = [],
   currentEmail,
+  existingPhotoUrl,
 }: ClientFormProps) => {
+  const [photoPreview, setPhotoPreview] = useState<string | null>(existingPhotoUrl || null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
+
   const form = useForm<ClientFormData>({
     resolver: zodResolver(clientFormSchema),
     defaultValues: defaultValues || {
@@ -172,6 +180,35 @@ export const ClientForm = ({
 
   const watchServices = form.watch("services");
   const watchCourses = form.watch("courses");
+  const watchName = form.watch("full_name");
+
+  const handlePhotoChange = (file: File | undefined) => {
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPhotoPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+      form.setValue("photo", file);
+    }
+  };
+
+  const handleRemovePhoto = () => {
+    setPhotoPreview(null);
+    form.setValue("photo", undefined);
+    if (photoInputRef.current) {
+      photoInputRef.current.value = "";
+    }
+  };
+
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .slice(0, 2)
+      .join("")
+      .toUpperCase();
+  };
 
   const handleSubmit = (data: ClientFormData) => {
     if (existingEmails.includes(data.email.toLowerCase()) && data.email.toLowerCase() !== currentEmail?.toLowerCase()) {
@@ -199,20 +236,68 @@ export const ClientForm = ({
               Dados Pessoais
             </CardTitle>
           </CardHeader>
-          <CardContent className="px-0 grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="full_name"
-              render={({ field }) => (
-                <FormItem className="md:col-span-2">
-                  <FormLabel>Nome Completo *</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Digite o nome completo" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          <CardContent className="px-0 space-y-6">
+            {/* Foto do Cliente - Destaque */}
+            <div className="flex flex-col items-center gap-4 p-6 bg-muted/30 rounded-xl border border-dashed border-muted-foreground/30">
+              <div className="relative group">
+                <Avatar className="h-32 w-32 border-4 border-background shadow-lg">
+                  <AvatarImage src={photoPreview || undefined} alt="Foto do cliente" />
+                  <AvatarFallback className="text-3xl bg-primary/10 text-primary font-semibold">
+                    {watchName ? getInitials(watchName) : <Camera className="h-10 w-10 text-muted-foreground" />}
+                  </AvatarFallback>
+                </Avatar>
+                {photoPreview && (
+                  <button
+                    type="button"
+                    onClick={handleRemovePhoto}
+                    className="absolute -top-2 -right-2 h-7 w-7 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center hover:bg-destructive/90 transition-colors shadow-md"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+              <div className="text-center space-y-2">
+                <FormLabel className="text-base font-medium">Foto do Cliente</FormLabel>
+                <FormDescription className="text-sm text-muted-foreground">
+                  Adicione uma foto para identificar o cliente
+                </FormDescription>
+                <div className="flex gap-2 justify-center">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => photoInputRef.current?.click()}
+                    className="gap-2"
+                  >
+                    <Camera className="h-4 w-4" />
+                    {photoPreview ? "Trocar Foto" : "Selecionar Foto"}
+                  </Button>
+                </div>
+                <input
+                  ref={photoInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => handlePhotoChange(e.target.files?.[0])}
+                  className="hidden"
+                />
+              </div>
+            </div>
+
+            {/* Campos do formulário */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="full_name"
+                render={({ field }) => (
+                  <FormItem className="md:col-span-2">
+                    <FormLabel>Nome Completo *</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Digite o nome completo" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
             <FormField
               control={form.control}
@@ -288,25 +373,6 @@ export const ClientForm = ({
                   <FormLabel>Endereço</FormLabel>
                   <FormControl>
                     <Input placeholder="Rua, número, bairro, cidade - UF" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="photo"
-              render={({ field: { onChange, value, ...field } }) => (
-                <FormItem>
-                  <FormLabel>Foto do Cliente</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => onChange(e.target.files?.[0])}
-                      {...field}
-                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -425,6 +491,7 @@ export const ClientForm = ({
                 </FormItem>
               )}
             />
+            </div>
           </CardContent>
         </Card>
 
