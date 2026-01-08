@@ -2,33 +2,20 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { CandidateTable } from "@/components/CandidateTable";
-import { CandidateFormData } from "@/components/CandidateForm";
+import { ClientTable, Client } from "@/components/ClientTable";
+import { ClientFormData } from "@/components/ClientForm";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Users, LogOut, UserPlus, MapPin, Briefcase } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { CandidateForm } from "@/components/CandidateForm";
-
-interface Candidate {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  area: string;
-  status: string;
-  city: string;
-  resume_url: string | null;
-  linkedin_url: string | null;
-  registration_date: string;
-}
+import { ClientForm } from "@/components/ClientForm";
 
 const Admin = () => {
   const { user, isAdmin, loading, signOut } = useAuth();
-  const [candidates, setCandidates] = useState<Candidate[]>([]);
-  const [loadingCandidates, setLoadingCandidates] = useState(true);
-  const [isAddingCandidate, setIsAddingCandidate] = useState(false);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [loadingClients, setLoadingClients] = useState(true);
+  const [isAddingClient, setIsAddingClient] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -49,156 +36,108 @@ const Admin = () => {
 
   useEffect(() => {
     if (user && isAdmin) {
-      fetchCandidates();
+      fetchClients();
     }
   }, [user, isAdmin]);
 
-  const fetchCandidates = async () => {
+  const fetchClients = async () => {
     try {
-      setLoadingCandidates(true);
+      setLoadingClients(true);
       const { data, error } = await supabase
-        .from('candidates')
+        .from('clients')
         .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
 
-      setCandidates(data || []);
+      const transformedClients: Client[] = (data || []).map(c => ({
+        id: c.id,
+        full_name: c.full_name,
+        email: c.email,
+        phone: c.phone,
+        area_of_interest: c.area_of_interest,
+        status: c.status,
+        region: c.region,
+        linkedin_url: c.linkedin_url,
+        resume_url: c.resume_url,
+        photo_url: c.photo_url,
+        registrationDate: new Date(c.created_at || new Date()),
+        contract_number: c.contract_number,
+      }));
+
+      setClients(transformedClients);
     } catch (error: any) {
-      console.error('Error fetching candidates:', error);
+      console.error('Error fetching clients:', error);
       toast({
-        title: "Erro ao carregar candidatos",
+        title: "Erro ao carregar clientes",
         description: error.message,
         variant: "destructive",
       });
     } finally {
-      setLoadingCandidates(false);
+      setLoadingClients(false);
     }
   };
 
-  const uploadResume = async (file: File, userId: string, candidateId: string) => {
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${userId}/${candidateId}.${fileExt}`;
-
-    const { error: uploadError } = await supabase.storage
-      .from('resumes')
-      .upload(fileName, file, { upsert: true });
-
-    if (uploadError) throw uploadError;
-
-    const { data: { publicUrl } } = supabase.storage
-      .from('resumes')
-      .getPublicUrl(fileName);
-
-    return publicUrl;
-  };
-
-  const handleEditCandidate = async (id: string, data: CandidateFormData) => {
-    if (!user || !isAdmin) return;
-
-    try {
-      let resumeUrl = undefined;
-
-      if (data.resume instanceof File) {
-        resumeUrl = await uploadResume(data.resume, user.id, id);
-      }
-
-      const updateData: any = {
-        name: data.name,
-        email: data.email,
-        phone: data.phone,
-        area: data.area,
-        city: data.city,
-        linkedin_url: data.linkedin_url || null,
-      };
-
-      if (resumeUrl) {
-        updateData.resume_url = resumeUrl;
-      }
-
-      const { error } = await supabase
-        .from('candidates')
-        .update(updateData)
-        .eq('id', id);
-
-      if (error) throw error;
-
-      toast({
-        title: "Candidato atualizado com sucesso!",
-      });
-
-      fetchCandidates();
-    } catch (error: any) {
-      console.error('Error updating candidate:', error);
-      toast({
-        title: "Erro ao atualizar candidato",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleDeleteCandidate = async (id: string) => {
+  const handleDeleteClient = async (id: string) => {
     if (!user || !isAdmin) return;
 
     try {
       const { error } = await supabase
-        .from('candidates')
+        .from('clients')
         .delete()
         .eq('id', id);
 
       if (error) throw error;
 
-      toast({
-        title: "Candidato excluído com sucesso!",
-      });
-
-      fetchCandidates();
+      toast({ title: "Cliente excluído com sucesso!" });
+      fetchClients();
     } catch (error: any) {
-      console.error('Error deleting candidate:', error);
+      console.error('Error deleting client:', error);
       toast({
-        title: "Erro ao excluir candidato",
+        title: "Erro ao excluir cliente",
         description: error.message,
         variant: "destructive",
       });
     }
   };
 
-  const handleAddCandidate = async (data: CandidateFormData) => {
+  const handleAddClient = async (data: ClientFormData) => {
     if (!user || !isAdmin) return;
 
     try {
-      let resumeUrl = null;
-
-      if (data.resume instanceof File) {
-        resumeUrl = await uploadResume(data.resume, user.id, crypto.randomUUID());
-      }
-
       const { error } = await supabase
-        .from('candidates')
+        .from('clients')
         .insert({
-          name: data.name,
+          full_name: data.full_name,
           email: data.email,
-          phone: data.phone,
-          area: data.area,
-          city: data.city,
+          phone: data.phone || null,
+          address: data.address || null,
+          rg: data.rg || null,
+          cpf: data.cpf || null,
+          education: data.education || null,
+          area_of_interest: data.area_of_interest || null,
+          region: data.region || null,
           linkedin_url: data.linkedin_url || null,
-          resume_url: resumeUrl,
+          contract_number: data.contract_number || null,
+          contract_start_date: data.contract_start_date || null,
+          contract_end_date: data.contract_end_date || null,
+          contract_value: data.contract_value ? parseFloat(data.contract_value) : null,
+          payment_method: data.payment_method || null,
+          installments_count: data.installments_count ? parseInt(data.installments_count) : null,
+          installments_due_date: data.installments_due_date || null,
+          notes: data.notes || null,
           user_id: user.id,
         });
 
       if (error) throw error;
 
-      toast({
-        title: "Candidato adicionado com sucesso!",
-      });
-
-      setIsAddingCandidate(false);
-      fetchCandidates();
+      toast({ title: "Cliente adicionado com sucesso!" });
+      setIsAddingClient(false);
+      fetchClients();
     } catch (error: any) {
-      console.error('Error adding candidate:', error);
+      console.error('Error adding client:', error);
       toast({
-        title: "Erro ao adicionar candidato",
+        title: "Erro ao adicionar cliente",
         description: error.message,
         variant: "destructive",
       });
@@ -210,13 +149,12 @@ const Admin = () => {
 
     try {
       const { error } = await supabase
-        .from('candidates')
+        .from('clients')
         .update({ status: newStatus })
         .in('id', ids);
 
       if (error) throw error;
-
-      fetchCandidates();
+      fetchClients();
     } catch (error: any) {
       console.error('Error updating status:', error);
       toast({
@@ -232,39 +170,23 @@ const Admin = () => {
 
     try {
       const { error } = await supabase
-        .from('candidates')
+        .from('clients')
         .delete()
         .in('id', ids);
 
       if (error) throw error;
-
-      fetchCandidates();
+      fetchClients();
     } catch (error: any) {
-      console.error('Error deleting candidates:', error);
+      console.error('Error deleting clients:', error);
       toast({
-        title: "Erro ao excluir candidatos",
+        title: "Erro ao excluir clientes",
         description: error.message,
         variant: "destructive",
       });
     }
   };
 
-  const transformCandidates = (dbCandidates: Candidate[]) => {
-    return dbCandidates.map(c => ({
-      id: c.id,
-      name: c.name,
-      email: c.email,
-      phone: c.phone,
-      area: c.area,
-      status: c.status,
-      city: c.city,
-      linkedin_url: c.linkedin_url,
-      resume_url: c.resume_url,
-      registrationDate: new Date(c.registration_date),
-    }));
-  };
-
-  if (loading || loadingCandidates) {
+  if (loading || loadingClients) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <p className="text-muted-foreground">Carregando...</p>
@@ -290,7 +212,7 @@ const Admin = () => {
                   Person Corp - Área Administrativa
                 </h1>
                 <p className="text-sm text-muted-foreground">
-                  Gerenciar candidatos do sistema
+                  Gerenciar clientes do sistema
                 </p>
               </div>
             </div>
@@ -309,17 +231,16 @@ const Admin = () => {
       </header>
 
       <main className="container mx-auto px-4 py-8 space-y-6">
-        {/* Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
-                <CardDescription>Total de Candidatos</CardDescription>
+                <CardDescription>Total de Clientes</CardDescription>
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
                   <Users className="h-5 w-5 text-primary" />
                 </div>
               </div>
-              <CardTitle className="text-3xl">{candidates.length}</CardTitle>
+              <CardTitle className="text-3xl">{clients.length}</CardTitle>
             </CardHeader>
           </Card>
           <Card className="border-blue-500/20 bg-gradient-to-br from-blue-500/5 to-transparent">
@@ -331,56 +252,55 @@ const Admin = () => {
                 </div>
               </div>
               <CardTitle className="text-3xl">
-                {new Set(candidates.map(c => c.area)).size}
+                {new Set(clients.map(c => c.area_of_interest).filter(Boolean)).size}
               </CardTitle>
             </CardHeader>
           </Card>
           <Card className="border-green-500/20 bg-gradient-to-br from-green-500/5 to-transparent">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
-                <CardDescription>Cidades Diferentes</CardDescription>
+                <CardDescription>Regiões Diferentes</CardDescription>
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-500/10">
                   <MapPin className="h-5 w-5 text-green-500" />
                 </div>
               </div>
               <CardTitle className="text-3xl">
-                {new Set(candidates.map(c => c.city)).size}
+                {new Set(clients.map(c => c.region).filter(Boolean)).size}
               </CardTitle>
             </CardHeader>
           </Card>
         </div>
 
-        {/* Candidates Table */}
         <Card>
           <CardHeader>
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
-                <CardTitle>Lista de Candidatos</CardTitle>
+                <CardTitle>Lista de Clientes</CardTitle>
                 <CardDescription>
-                  Gerencie todos os candidatos cadastrados no sistema
+                  Gerencie todos os clientes cadastrados no sistema
                 </CardDescription>
               </div>
-              <Dialog open={isAddingCandidate} onOpenChange={setIsAddingCandidate}>
+              <Dialog open={isAddingClient} onOpenChange={setIsAddingClient}>
                 <DialogTrigger asChild>
                   <Button className="w-full sm:w-auto">
                     <UserPlus className="h-4 w-4 mr-2" />
-                    Novo Candidato
+                    Novo Cliente
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
-                    <DialogTitle>Adicionar Novo Candidato</DialogTitle>
+                    <DialogTitle>Adicionar Novo Cliente</DialogTitle>
                   </DialogHeader>
-                  <CandidateForm onSubmit={handleAddCandidate} />
+                  <ClientForm onSubmit={handleAddClient} />
                 </DialogContent>
               </Dialog>
             </div>
           </CardHeader>
           <CardContent>
-            <CandidateTable
-              candidates={transformCandidates(candidates)}
-              onEdit={handleEditCandidate}
-              onDelete={handleDeleteCandidate}
+            <ClientTable
+              clients={clients}
+              onEdit={() => {}}
+              onDelete={handleDeleteClient}
               onBulkStatusChange={handleBulkStatusChange}
               onBulkDelete={handleBulkDelete}
             />
