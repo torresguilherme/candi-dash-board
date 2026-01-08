@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import logo from "@/assets/logo.png";
 
-const Index = () => {
+const Cadastro = () => {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const { toast } = useToast();
@@ -167,4 +167,4 @@ const Index = () => {
   );
 };
 
-export default Index;
+export default Cadastro;
