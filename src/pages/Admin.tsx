@@ -24,6 +24,7 @@ import { EmptyState } from "@/components/admin/EmptyState";
 import { LoadingSkeleton } from "@/components/admin/LoadingSkeleton";
 import { ClientTable, Client } from "@/components/ClientTable";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { ImportExcelDialog } from "@/components/ImportExcelDialog";
 
 const Admin = () => {
   const { user, isAdmin, loading, signOut } = useAuth();
@@ -328,22 +329,25 @@ const Admin = () => {
               Gerencie sua base de clientes da Person Corp
             </p>
           </div>
-          <Dialog open={isAddingClient} onOpenChange={setIsAddingClient}>
-            <DialogTrigger asChild>
-              <Button size="lg" className="hidden sm:flex">
-                <UserPlus className="h-5 w-5 mr-2" />
-                Novo Cliente
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0">
-              <DialogHeader className="p-6 pb-0">
-                <DialogTitle>Adicionar Novo Cliente</DialogTitle>
-              </DialogHeader>
-              <div className="flex-1 overflow-y-auto p-6 pt-4">
-                <ClientForm onSubmit={handleAddClient} />
-              </div>
-            </DialogContent>
-          </Dialog>
+          <div className="flex gap-2">
+            <ImportExcelDialog onImportComplete={fetchClients} userId={user.id} />
+            <Dialog open={isAddingClient} onOpenChange={setIsAddingClient}>
+              <DialogTrigger asChild>
+                <Button size="lg" className="hidden sm:flex">
+                  <UserPlus className="h-5 w-5 mr-2" />
+                  Novo Cliente
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0">
+                <DialogHeader className="p-6 pb-0">
+                  <DialogTitle>Adicionar Novo Cliente</DialogTitle>
+                </DialogHeader>
+                <div className="flex-1 overflow-y-auto p-6 pt-4">
+                  <ClientForm onSubmit={handleAddClient} />
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
 
         {/* Statistics Cards - Top Row */}
