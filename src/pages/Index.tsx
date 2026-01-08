@@ -1,62 +1,52 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { ClientForm, ClientFormData } from "@/components/ClientForm";
+import { CandidateForm, CandidateFormData } from "@/components/CandidateForm";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import logo from "@/assets/logo.png";
 
-const Cadastro = () => {
+const Index = () => {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const { toast } = useToast();
 
-  const uploadFile = async (file: File, bucket: string, clientId: string, folder: string = "") => {
+  const uploadResume = async (file: File, candidateId: string) => {
     const fileExt = file.name.split(".").pop();
-    const fileName = folder ? `${folder}/${clientId}.${fileExt}` : `public/${clientId}.${fileExt}`;
+    const fileName = `public/${candidateId}.${fileExt}`;
 
-    const { error: uploadError } = await supabase.storage.from(bucket).upload(fileName, file, { upsert: true });
+    const { error: uploadError } = await supabase.storage.from("resumes").upload(fileName, file, { upsert: true });
 
     if (uploadError) throw uploadError;
 
     const {
       data: { publicUrl },
-    } = supabase.storage.from(bucket).getPublicUrl(fileName);
+    } = supabase.storage.from("resumes").getPublicUrl(fileName);
 
     return publicUrl;
   };
 
-  const handleAddClient = async (data: ClientFormData) => {
+  const handleAddCandidate = async (data: CandidateFormData) => {
     setSubmitting(true);
 
     try {
-      const clientId = crypto.randomUUID();
+      const candidateId = crypto.randomUUID();
       let resumeUrl = null;
-      let photoUrl = null;
 
       if (data.resume instanceof File) {
-        resumeUrl = await uploadFile(data.resume, "resumes", clientId);
+        resumeUrl = await uploadResume(data.resume, candidateId);
       }
 
-      if (data.photo instanceof File) {
-        photoUrl = await uploadFile(data.photo, "client-photos", clientId);
-      }
-
-      const { error } = await supabase.from("clients").insert({
-        id: clientId,
+      const { error } = await supabase.from("candidates").insert({
+        id: candidateId,
         user_id: null,
-        full_name: data.full_name,
+        name: data.name,
         email: data.email,
-        phone: data.phone || null,
-        address: data.address || null,
-        rg: data.rg || null,
-        cpf: data.cpf || null,
-        photo_url: photoUrl,
-        education: data.education || null,
-        area_of_interest: data.area_of_interest || null,
-        region: data.region || null,
-        resume_url: resumeUrl,
+        phone: data.phone,
+        area: data.area,
+        city: data.city,
         linkedin_url: data.linkedin_url || null,
+        resume_url: resumeUrl,
       });
 
       if (error) throw error;
@@ -69,31 +59,27 @@ const Cadastro = () => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            id: clientId,
-            full_name: data.full_name,
+            id: candidateId,
+            name: data.name,
             email: data.email,
             phone: data.phone,
-            address: data.address,
-            rg: data.rg,
-            cpf: data.cpf,
-            education: data.education,
-            area_of_interest: data.area_of_interest,
-            region: data.region,
+            area: data.area,
+            city: data.city,
             linkedin_url: data.linkedin_url || null,
             resume_url: resumeUrl,
-            photo_url: photoUrl,
             registration_date: new Date().toISOString(),
           }),
         });
       } catch (webhookError) {
         console.error("Error sending to webhook:", webhookError);
+        // Don't throw - we don't want to fail the submission if webhook fails
       }
 
       setSubmitted(true);
     } catch (error: any) {
-      console.error("Error adding client:", error);
+      console.error("Error adding candidate:", error);
       toast({
-        title: "Erro ao enviar cadastro",
+        title: "Erro ao enviar candidatura",
         description: error.message,
         variant: "destructive",
       });
@@ -170,10 +156,9 @@ const Cadastro = () => {
             <CardDescription>Preencha seus dados para se candidatar às nossas vagas</CardDescription>
           </CardHeader>
           <CardContent>
-            <ClientForm
-              onSubmit={handleAddClient}
+            <CandidateForm
+              onSubmit={handleAddCandidate}
               submitButtonText={submitting ? "Enviando..." : "Enviar Candidatura"}
-              isPublicForm={true}
             />
           </CardContent>
         </Card>
@@ -182,4 +167,4 @@ const Cadastro = () => {
   );
 };
 
-export default Cadastro;
+export default Index;
