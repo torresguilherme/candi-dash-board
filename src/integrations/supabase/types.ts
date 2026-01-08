@@ -14,26 +14,26 @@ export type Database = {
   }
   public: {
     Tables: {
-      candidate_documents: {
+      client_documents: {
         Row: {
-          candidate_id: string
-          created_at: string | null
+          client_id: string
+          created_at: string
           file_name: string
           file_path: string
           file_size: number
           id: string
         }
         Insert: {
-          candidate_id: string
-          created_at?: string | null
+          client_id: string
+          created_at?: string
           file_name: string
           file_path: string
           file_size: number
           id?: string
         }
         Update: {
-          candidate_id?: string
-          created_at?: string | null
+          client_id?: string
+          created_at?: string
           file_name?: string
           file_path?: string
           file_size?: number
@@ -41,87 +41,129 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "candidate_documents_candidate_id_fkey"
-            columns: ["candidate_id"]
+            foreignKeyName: "client_documents_client_id_fkey"
+            columns: ["client_id"]
             isOneToOne: false
-            referencedRelation: "candidates"
+            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
         ]
       }
-      candidate_meetings: {
+      client_services: {
         Row: {
-          candidate_id: string
-          created_at: string | null
+          client_id: string
+          created_at: string
           id: string
-          meeting_date: string
+          is_active: boolean
           notes: string | null
+          service_type: string
         }
         Insert: {
-          candidate_id: string
-          created_at?: string | null
+          client_id: string
+          created_at?: string
           id?: string
-          meeting_date: string
+          is_active?: boolean
           notes?: string | null
+          service_type: string
         }
         Update: {
-          candidate_id?: string
-          created_at?: string | null
+          client_id?: string
+          created_at?: string
           id?: string
-          meeting_date?: string
+          is_active?: boolean
           notes?: string | null
+          service_type?: string
         }
         Relationships: [
           {
-            foreignKeyName: "candidate_meetings_candidate_id_fkey"
-            columns: ["candidate_id"]
+            foreignKeyName: "client_services_client_id_fkey"
+            columns: ["client_id"]
             isOneToOne: false
-            referencedRelation: "candidates"
+            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
         ]
       }
-      candidates: {
+      clients: {
         Row: {
-          area: string
-          city: string
-          created_at: string | null
+          address: string | null
+          area_of_interest: string | null
+          contract_end_date: string | null
+          contract_number: string | null
+          contract_start_date: string | null
+          contract_value: number | null
+          cpf: string | null
+          created_at: string
+          education: string | null
           email: string
+          full_name: string
           id: string
+          installments_count: number | null
+          installments_due_date: string | null
           linkedin_url: string | null
-          name: string
-          phone: string
-          registration_date: string
+          notes: string | null
+          payment_method: string | null
+          phone: string | null
+          photo_url: string | null
+          region: string | null
           resume_url: string | null
+          rg: string | null
           status: string
+          updated_at: string
           user_id: string | null
         }
         Insert: {
-          area: string
-          city: string
-          created_at?: string | null
+          address?: string | null
+          area_of_interest?: string | null
+          contract_end_date?: string | null
+          contract_number?: string | null
+          contract_start_date?: string | null
+          contract_value?: number | null
+          cpf?: string | null
+          created_at?: string
+          education?: string | null
           email: string
+          full_name: string
           id?: string
+          installments_count?: number | null
+          installments_due_date?: string | null
           linkedin_url?: string | null
-          name: string
-          phone: string
-          registration_date?: string
+          notes?: string | null
+          payment_method?: string | null
+          phone?: string | null
+          photo_url?: string | null
+          region?: string | null
           resume_url?: string | null
+          rg?: string | null
           status?: string
+          updated_at?: string
           user_id?: string | null
         }
         Update: {
-          area?: string
-          city?: string
-          created_at?: string | null
+          address?: string | null
+          area_of_interest?: string | null
+          contract_end_date?: string | null
+          contract_number?: string | null
+          contract_start_date?: string | null
+          contract_value?: number | null
+          cpf?: string | null
+          created_at?: string
+          education?: string | null
           email?: string
+          full_name?: string
           id?: string
+          installments_count?: number | null
+          installments_due_date?: string | null
           linkedin_url?: string | null
-          name?: string
-          phone?: string
-          registration_date?: string
+          notes?: string | null
+          payment_method?: string | null
+          phone?: string | null
+          photo_url?: string | null
+          region?: string | null
           resume_url?: string | null
+          rg?: string | null
           status?: string
+          updated_at?: string
           user_id?: string | null
         }
         Relationships: []
@@ -143,6 +185,41 @@ export type Database = {
           id?: string
         }
         Relationships: []
+      }
+      service_dates: {
+        Row: {
+          created_at: string
+          date_type: string
+          id: string
+          notes: string | null
+          scheduled_date: string
+          service_id: string
+        }
+        Insert: {
+          created_at?: string
+          date_type: string
+          id?: string
+          notes?: string | null
+          scheduled_date: string
+          service_id: string
+        }
+        Update: {
+          created_at?: string
+          date_type?: string
+          id?: string
+          notes?: string | null
+          scheduled_date?: string
+          service_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_dates_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "client_services"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
