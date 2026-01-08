@@ -7,7 +7,7 @@ import { CandidateFormData } from "@/components/CandidateForm";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Users, LogOut, Home, UserPlus, MapPin, Briefcase } from "lucide-react";
+import { Users, LogOut, UserPlus, MapPin, Briefcase } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { CandidateForm } from "@/components/CandidateForm";
 
@@ -35,9 +35,9 @@ const Admin = () => {
   useEffect(() => {
     if (!loading) {
       if (!user) {
-        navigate("/auth");
-      } else if (!isAdmin) {
         navigate("/");
+      } else if (!isAdmin) {
+        navigate("/cadastro");
         toast({
           title: "Acesso negado",
           description: "Você não tem permissão para acessar esta área",
@@ -295,9 +295,9 @@ const Admin = () => {
               </div>
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" onClick={() => navigate("/")}>
-                <Home className="h-4 w-4 mr-2" />
-                Início
+              <Button variant="outline" onClick={() => navigate("/cadastro")}>
+                <UserPlus className="h-4 w-4 mr-2" />
+                Cadastro
               </Button>
               <Button variant="outline" onClick={signOut}>
                 <LogOut className="h-4 w-4 mr-2" />
