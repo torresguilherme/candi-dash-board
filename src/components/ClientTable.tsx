@@ -61,7 +61,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { CandidateFolderDialog } from "./CandidateFolderDialog";
 import { CandidateAvatar } from "./admin/CandidateAvatar";
-import { CandidateForm, CandidateFormData } from "./CandidateForm";
+import { ClientForm, ClientFormData } from "./ClientForm";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -90,7 +90,7 @@ export interface Client {
 
 interface ClientTableProps {
   clients: Client[];
-  onEdit: (id: string, data: CandidateFormData) => void;
+  onEdit: (id: string, data: ClientFormData) => void;
   onDelete: (id: string) => void;
   onBulkStatusChange?: (ids: string[], newStatus: string) => void;
   onBulkDelete?: (ids: string[]) => void;
@@ -208,7 +208,7 @@ export const ClientTable = ({
     }
   };
 
-  const handleEdit = (data: CandidateFormData) => {
+  const handleEdit = (data: ClientFormData) => {
     if (editingClient) {
       onEdit(editingClient.id, data);
       setEditingClient(null);
@@ -924,20 +924,22 @@ export const ClientTable = ({
 
       {/* Edit Dialog */}
       <Dialog open={!!editingClient} onOpenChange={() => setEditingClient(null)}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Editar Cliente</DialogTitle>
           </DialogHeader>
           {editingClient && (
-            <CandidateForm
+            <ClientForm
               onSubmit={handleEdit}
               defaultValues={{
-                name: editingClient.full_name,
+                full_name: editingClient.full_name,
                 email: editingClient.email,
                 phone: editingClient.phone || "",
-                area: editingClient.area_of_interest || "",
-                city: editingClient.region || "",
+                area_of_interest: editingClient.area_of_interest || "",
+                region: editingClient.region || "",
                 linkedin_url: editingClient.linkedin_url || "",
+                cpf: editingClient.cpf || "",
+                education: editingClient.education || "",
               }}
               submitButtonText="Atualizar Cliente"
               existingEmails={clients.map(c => c.email)}

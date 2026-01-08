@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { CandidateFormData } from "@/components/CandidateForm";
+import { ClientFormData, ClientForm } from "@/components/ClientForm";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -18,12 +18,12 @@ import {
   DollarSign
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { CandidateForm } from "@/components/CandidateForm";
 import { AdminHeader } from "@/components/admin/AdminHeader";
 import { StatsCard } from "@/components/admin/StatsCard";
 import { EmptyState } from "@/components/admin/EmptyState";
 import { LoadingSkeleton } from "@/components/admin/LoadingSkeleton";
 import { ClientTable, Client } from "@/components/ClientTable";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const Admin = () => {
   const { user, isAdmin, loading, signOut } = useAuth();
@@ -94,28 +94,48 @@ const Admin = () => {
     return publicUrl;
   };
 
-  const handleEditClient = async (id: string, data: CandidateFormData) => {
+  const handleEditClient = async (id: string, data: ClientFormData) => {
     if (!user || !isAdmin) return;
 
     try {
       let resumeUrl = undefined;
+      let photoUrl = undefined;
 
       if (data.resume instanceof File) {
         resumeUrl = await uploadResume(data.resume, user.id, id);
       }
 
+      if (data.photo instanceof File) {
+        const photoExt = data.photo.name.split('.').pop();
+        const photoName = `${user.id}/${id}-photo.${photoExt}`;
+        await supabase.storage.from('client-photos').upload(photoName, data.photo, { upsert: true });
+        const { data: { publicUrl } } = supabase.storage.from('client-photos').getPublicUrl(photoName);
+        photoUrl = publicUrl;
+      }
+
       const updateData: any = {
-        full_name: data.name,
+        full_name: data.full_name,
         email: data.email,
-        phone: data.phone,
-        area_of_interest: data.area,
-        region: data.city,
+        phone: data.phone || null,
+        address: data.address || null,
+        rg: data.rg || null,
+        cpf: data.cpf || null,
+        education: data.education || null,
+        area_of_interest: data.area_of_interest || null,
+        region: data.region || null,
         linkedin_url: data.linkedin_url || null,
+        contract_number: data.contract_number || null,
+        contract_start_date: data.contract_start_date || null,
+        contract_end_date: data.contract_end_date || null,
+        contract_value: data.contract_value ? parseFloat(data.contract_value) / 100 : null,
+        payment_method: data.payment_method || null,
+        installments_count: data.installments_count ? parseInt(data.installments_count) : null,
+        installments_due_date: data.installments_due_date || null,
+        notes: data.notes || null,
       };
 
-      if (resumeUrl) {
-        updateData.resume_url = resumeUrl;
-      }
+      if (resumeUrl) updateData.resume_url = resumeUrl;
+      if (photoUrl) updateData.photo_url = photoUrl;
 
       const { error } = await supabase
         .from('clients')
@@ -124,10 +144,7 @@ const Admin = () => {
 
       if (error) throw error;
 
-      toast({
-        title: "Cliente atualizado com sucesso!",
-      });
-
+      toast({ title: "Cliente atualizado com sucesso!" });
       fetchClients();
     } catch (error: any) {
       console.error('Error updating client:', error);
@@ -165,36 +182,57 @@ const Admin = () => {
     }
   };
 
-  const handleAddClient = async (data: CandidateFormData) => {
+  const handleAddClient = async (data: ClientFormData) => {
     if (!user || !isAdmin) return;
 
     try {
+      const clientId = crypto.randomUUID();
       let resumeUrl = null;
+      let photoUrl = null;
 
       if (data.resume instanceof File) {
-        resumeUrl = await uploadResume(data.resume, user.id, crypto.randomUUID());
+        resumeUrl = await uploadResume(data.resume, user.id, clientId);
+      }
+
+      if (data.photo instanceof File) {
+        const photoExt = data.photo.name.split('.').pop();
+        const photoName = `${user.id}/${clientId}-photo.${photoExt}`;
+        await supabase.storage.from('client-photos').upload(photoName, data.photo, { upsert: true });
+        const { data: { publicUrl } } = supabase.storage.from('client-photos').getPublicUrl(photoName);
+        photoUrl = publicUrl;
       }
 
       const { error } = await supabase
         .from('clients')
         .insert({
-          full_name: data.name,
+          id: clientId,
+          full_name: data.full_name,
           email: data.email,
-          phone: data.phone,
-          area_of_interest: data.area,
-          region: data.city,
+          phone: data.phone || null,
+          address: data.address || null,
+          rg: data.rg || null,
+          cpf: data.cpf || null,
+          education: data.education || null,
+          area_of_interest: data.area_of_interest || null,
+          region: data.region || null,
           linkedin_url: data.linkedin_url || null,
           resume_url: resumeUrl,
+          photo_url: photoUrl,
+          contract_number: data.contract_number || null,
+          contract_start_date: data.contract_start_date || null,
+          contract_end_date: data.contract_end_date || null,
+          contract_value: data.contract_value ? parseFloat(data.contract_value) / 100 : null,
+          payment_method: data.payment_method || null,
+          installments_count: data.installments_count ? parseInt(data.installments_count) : null,
+          installments_due_date: data.installments_due_date || null,
+          notes: data.notes || null,
           user_id: user.id,
           status: "Novo",
         });
 
       if (error) throw error;
 
-      toast({
-        title: "Cliente adicionado com sucesso!",
-      });
-
+      toast({ title: "Cliente adicionado com sucesso!" });
       setIsAddingClient(false);
       fetchClients();
     } catch (error: any) {
@@ -297,11 +335,13 @@ const Admin = () => {
                 Novo Cliente
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
               <DialogHeader>
                 <DialogTitle>Adicionar Novo Cliente</DialogTitle>
               </DialogHeader>
-              <CandidateForm onSubmit={handleAddClient} />
+              <ScrollArea className="flex-1 pr-4">
+                <ClientForm onSubmit={handleAddClient} />
+              </ScrollArea>
             </DialogContent>
           </Dialog>
         </div>
