@@ -924,28 +924,31 @@ export const ClientTable = ({
 
       {/* Edit Dialog */}
       <Dialog open={!!editingClient} onOpenChange={() => setEditingClient(null)}>
-        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
+        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0">
+          <DialogHeader className="p-6 pb-0">
             <DialogTitle>Editar Cliente</DialogTitle>
           </DialogHeader>
-          {editingClient && (
-            <ClientForm
-              onSubmit={handleEdit}
-              defaultValues={{
-                full_name: editingClient.full_name,
-                email: editingClient.email,
-                phone: editingClient.phone || "",
-                area_of_interest: editingClient.area_of_interest || "",
-                region: editingClient.region || "",
-                linkedin_url: editingClient.linkedin_url || "",
-                cpf: editingClient.cpf || "",
-                education: editingClient.education || "",
-              }}
-              submitButtonText="Atualizar Cliente"
-              existingEmails={clients.map(c => c.email)}
-              currentEmail={editingClient.email}
-            />
-          )}
+          <div className="flex-1 overflow-y-auto p-6 pt-4">
+            {editingClient && (
+              <ClientForm
+                onSubmit={handleEdit}
+                defaultValues={{
+                  full_name: editingClient.full_name,
+                  email: editingClient.email,
+                  phone: editingClient.phone || "",
+                  area_of_interest: editingClient.area_of_interest || "",
+                  region: editingClient.region || "",
+                  linkedin_url: editingClient.linkedin_url || "",
+                  cpf: editingClient.cpf || "",
+                  education: editingClient.education || "",
+                }}
+                submitButtonText="Atualizar Cliente"
+                existingEmails={clients.map(c => c.email)}
+                currentEmail={editingClient.email}
+                existingPhotoUrl={editingClient.photo_url}
+              />
+            )}
+          </div>
         </DialogContent>
       </Dialog>
 
