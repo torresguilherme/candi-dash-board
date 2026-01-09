@@ -103,7 +103,7 @@ export interface CRMClient {
 
 interface CRMClientTableProps {
   clients: CRMClient[];
-  onEdit: (id: string, data: ClientFormData) => void;
+  onEdit: (id: string, data: ClientFormData) => void | Promise<void>;
   onDelete: (id: string) => void;
   onBulkStatusChange?: (ids: string[], newStatus: string) => void;
   onBulkDelete?: (ids: string[]) => void;
@@ -216,10 +216,14 @@ export const CRMClientTable = ({
     }
   };
 
-  const handleEdit = (data: ClientFormData) => {
-    if (editingClient) {
-      onEdit(editingClient.id, data);
+  const handleEdit = async (data: ClientFormData) => {
+    if (!editingClient) return;
+
+    try {
+      await onEdit(editingClient.id, data);
       setEditingClient(null);
+    } catch {
+      // keep dialog open so user can correct and try again
     }
   };
 
@@ -568,7 +572,7 @@ export const CRMClientTable = ({
                                   variant="ghost"
                                   size="icon"
                                   className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
-                                  onClick={() => window.open(client.resume_url!, '_blank')}
+                                  onClick={() => window.open(client.resume_url!, "_blank", "noopener,noreferrer")}
                                 >
                                   <FileText className="h-4 w-4 text-orange-600" />
                                 </Button>
@@ -840,7 +844,7 @@ export const CRMClientTable = ({
                 {viewingClient.resume_url && (
                   <Button 
                     variant="outline" 
-                    onClick={() => window.open(viewingClient.resume_url!, '_blank')}
+                    onClick={() => window.open(viewingClient.resume_url!, "_blank", "noopener,noreferrer")}
                   >
                     <FileText className="h-4 w-4 mr-2" />
                     Ver Currículo

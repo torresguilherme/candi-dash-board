@@ -124,7 +124,7 @@ const clientFormSchema = z.object({
 export type ClientFormData = z.infer<typeof clientFormSchema>;
 
 interface ClientFormProps {
-  onSubmit: (data: ClientFormData) => void;
+  onSubmit: (data: ClientFormData) => void | Promise<void>;
   defaultValues?: Partial<ClientFormData>;
   submitButtonText?: string;
   existingEmails?: string[];
@@ -276,14 +276,21 @@ export const ClientForm = ({
   const watchName = form.watch("full_name");
 
   const handlePhotoChange = (file: File | undefined) => {
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPhotoPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-      form.setValue("photo", file);
+    if (!file) return;
+
+    // Prevent unsupported formats (common issue: HEIC from iPhone)
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error("Formato de foto não suportado. Use JPG, PNG ou WebP.");
+      return;
     }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setPhotoPreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+    form.setValue("photo", file);
   };
 
   const handleRemovePhoto = () => {
@@ -303,18 +310,25 @@ export const ClientForm = ({
       .toUpperCase();
   };
 
-  const handleSubmit = (data: ClientFormData) => {
-    if (existingEmails.includes(data.email.toLowerCase()) && data.email.toLowerCase() !== currentEmail?.toLowerCase()) {
+  const handleSubmit = async (data: ClientFormData) => {
+    if (
+      existingEmails.includes(data.email.toLowerCase()) &&
+      data.email.toLowerCase() !== currentEmail?.toLowerCase()
+    ) {
       toast.error("Este e-mail já está cadastrado!");
       return;
     }
-    
-    onSubmit(data);
-    if (!defaultValues) {
-      form.reset();
-      toast.success("Cliente cadastrado com sucesso!");
-    } else {
-      toast.success("Cliente atualizado com sucesso!");
+
+    try {
+      await onSubmit(data);
+
+      if (!defaultValues) {
+        form.reset();
+        setPhotoPreview(null);
+      }
+    } catch (error) {
+      // The caller already shows a detailed error toast.
+      console.error("ClientForm submit error:", error);
     }
   };
 
@@ -369,7 +383,7 @@ export const ClientForm = ({
                 <input
                   ref={photoInputRef}
                   type="file"
-                  accept="image/*"
+                  accept="image/jpeg,image/png,image/webp"
                   onChange={(e) => handlePhotoChange(e.target.files?.[0])}
                   className="hidden"
                 />
