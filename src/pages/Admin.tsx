@@ -59,15 +59,44 @@ const Admin = () => {
     try {
       setLoadingClients(true);
       const { data, error } = await supabase
-        .from('clients')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .from("clients")
+        .select("*")
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
 
-      setClients(data || []);
+      // client-photos bucket is private; generate signed URLs for display
+      const withSignedPhotos = await Promise.all(
+        (data || []).map(async (client) => {
+          const raw = client.photo_url as string | null;
+          if (!raw) return client;
+
+          let path: string | null = null;
+
+          if (raw.startsWith("http")) {
+            const idx = raw.indexOf("client-photos/");
+            if (idx !== -1) {
+              path = raw.substring(idx + "client-photos/".length);
+            }
+          } else {
+            // we store the storage path for new uploads
+            path = raw;
+          }
+
+          if (!path) return client;
+
+          const { data: signed, error: signErr } = await supabase.storage
+            .from("client-photos")
+            .createSignedUrl(path, 60 * 60);
+
+          if (signErr || !signed?.signedUrl) return client;
+          return { ...client, photo_url: signed.signedUrl };
+        })
+      );
+
+      setClients(withSignedPhotos as any);
     } catch (error: unknown) {
-      console.error('Error fetching clients');
+      console.error("Error fetching clients");
       toast({
         title: "Erro ao carregar clientes",
         description: getUserFriendlyError(error, "Não foi possível carregar a lista de clientes. Tente novamente."),
@@ -81,63 +110,62 @@ const Admin = () => {
   const saveClientServices = async (clientId: string, data: ClientFormData) => {
     const services = data.services || {};
     const serviceDates = data.service_dates || {};
-    
+
     const serviceTypes = [
-      'career_mentoring',
-      'market_mapping',
-      'support_material',
-      'interview_pitch',
-      'resume_restructuring',
-      'behavioral_assessment',
-      'brain_preference',
-      'company_referral',
-      'linkedin_service',
-      'personal_marketing',
+      "career_mentoring",
+      "market_mapping",
+      "support_material",
+      "interview_pitch",
+      "resume_restructuring",
+      "behavioral_assessment",
+      "brain_preference",
+      "company_referral",
+      "linkedin_service",
+      "personal_marketing",
     ] as const;
 
     for (const serviceType of serviceTypes) {
       const isActive = services[serviceType];
       const scheduledKey = `${serviceType}_scheduled` as keyof typeof serviceDates;
       const deliveredKey = `${serviceType}_delivered` as keyof typeof serviceDates;
-      
+
       const scheduledDate = serviceDates[scheduledKey] || null;
       const deliveredDate = serviceDates[deliveredKey] || null;
 
       // Check if service already exists
-      const { data: existing } = await supabase
-        .from('client_services')
-        .select('id')
-        .eq('client_id', clientId)
-        .eq('service_type', serviceType)
+      const { data: existing, error: existingErr } = await supabase
+        .from("client_services")
+        .select("id")
+        .eq("client_id", clientId)
+        .eq("service_type", serviceType)
         .maybeSingle();
+
+      if (existingErr) throw existingErr;
 
       if (isActive) {
         if (existing) {
-          // Update existing
-          await supabase
-            .from('client_services')
+          const { error: updErr } = await supabase
+            .from("client_services")
             .update({
               scheduled_date: scheduledDate,
               delivered_date: deliveredDate,
               is_active: !deliveredDate,
             })
-            .eq('id', existing.id);
+            .eq("id", existing.id);
+          if (updErr) throw updErr;
         } else {
-          // Insert new
-          await supabase.from('client_services').insert({
+          const { error: insErr } = await supabase.from("client_services").insert({
             client_id: clientId,
             service_type: serviceType,
             scheduled_date: scheduledDate,
             delivered_date: deliveredDate,
             is_active: !deliveredDate,
           });
+          if (insErr) throw insErr;
         }
       } else if (existing) {
-        // Delete if unchecked
-        await supabase
-          .from('client_services')
-          .delete()
-          .eq('id', existing.id);
+        const { error: delErr } = await supabase.from("client_services").delete().eq("id", existing.id);
+        if (delErr) throw delErr;
       }
     }
   };
@@ -163,19 +191,28 @@ const Admin = () => {
     if (!user || !isAdmin) return;
 
     try {
-      let resumeUrl = undefined;
-      let photoUrl = undefined;
+      let resumeUrl: string | undefined = undefined;
+      let photoPath: string | undefined = undefined;
 
       if (data.resume instanceof File) {
         resumeUrl = await uploadResume(data.resume, user.id, id);
       }
 
       if (data.photo instanceof File) {
-        const photoExt = data.photo.name.split('.').pop();
-        const photoName = `${user.id}/${id}-photo.${photoExt}`;
-        await supabase.storage.from('client-photos').upload(photoName, data.photo, { upsert: true });
-        const { data: { publicUrl } } = supabase.storage.from('client-photos').getPublicUrl(photoName);
-        photoUrl = publicUrl;
+        const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+        if (!allowedTypes.includes(data.photo.type)) {
+          throw new Error("Formato de foto não suportado. Use JPG, PNG ou WebP.");
+        }
+
+        const ext = data.photo.type === "image/png" ? "png" : data.photo.type === "image/webp" ? "webp" : "jpg";
+        const photoName = `${user.id}/${id}-photo.${ext}`;
+
+        const { error: uploadErr } = await supabase.storage
+          .from("client-photos")
+          .upload(photoName, data.photo, { upsert: true, contentType: data.photo.type });
+
+        if (uploadErr) throw uploadErr;
+        photoPath = photoName; // store path; we sign it when loading clients
       }
 
       const updateData: any = {
@@ -200,27 +237,24 @@ const Admin = () => {
       };
 
       if (resumeUrl) updateData.resume_url = resumeUrl;
-      if (photoUrl) updateData.photo_url = photoUrl;
+      if (photoPath) updateData.photo_url = photoPath;
 
-      const { error } = await supabase
-        .from('clients')
-        .update(updateData)
-        .eq('id', id);
-
+      const { error } = await supabase.from("clients").update(updateData).eq("id", id);
       if (error) throw error;
 
-      // Save services with dates
+      // Save services with dates (and propagate any errors)
       await saveClientServices(id, data);
 
       toast({ title: "Cliente atualizado com sucesso!" });
-      fetchClients();
+      await fetchClients();
     } catch (error: unknown) {
-      console.error('Error updating client');
+      console.error("Error updating client");
       toast({
         title: "Erro ao atualizar cliente",
         description: getUserFriendlyError(error, "Não foi possível atualizar o cliente. Tente novamente."),
         variant: "destructive",
       });
+      throw error;
     }
   };
 
@@ -255,48 +289,55 @@ const Admin = () => {
 
     try {
       const clientId = crypto.randomUUID();
-      let resumeUrl = null;
-      let photoUrl = null;
+      let resumeUrl: string | null = null;
+      let photoPath: string | null = null;
 
       if (data.resume instanceof File) {
         resumeUrl = await uploadResume(data.resume, user.id, clientId);
       }
 
       if (data.photo instanceof File) {
-        const photoExt = data.photo.name.split('.').pop();
-        const photoName = `${user.id}/${clientId}-photo.${photoExt}`;
-        await supabase.storage.from('client-photos').upload(photoName, data.photo, { upsert: true });
-        const { data: { publicUrl } } = supabase.storage.from('client-photos').getPublicUrl(photoName);
-        photoUrl = publicUrl;
+        const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+        if (!allowedTypes.includes(data.photo.type)) {
+          throw new Error("Formato de foto não suportado. Use JPG, PNG ou WebP.");
+        }
+
+        const ext = data.photo.type === "image/png" ? "png" : data.photo.type === "image/webp" ? "webp" : "jpg";
+        const photoName = `${user.id}/${clientId}-photo.${ext}`;
+
+        const { error: uploadErr } = await supabase.storage
+          .from("client-photos")
+          .upload(photoName, data.photo, { upsert: true, contentType: data.photo.type });
+
+        if (uploadErr) throw uploadErr;
+        photoPath = photoName; // store path; we sign it when loading clients
       }
 
-      const { error } = await supabase
-        .from('clients')
-        .insert({
-          id: clientId,
-          full_name: data.full_name,
-          email: data.email,
-          phone: data.phone || null,
-          address: data.address || null,
-          rg: data.rg || null,
-          cpf: data.cpf || null,
-          education: data.education || null,
-          area_of_interest: data.area_of_interest || null,
-          region: data.region || null,
-          linkedin_url: data.linkedin_url || null,
-          resume_url: resumeUrl,
-          photo_url: photoUrl,
-          contract_number: data.contract_number || null,
-          contract_start_date: data.contract_start_date || null,
-          contract_end_date: data.contract_end_date || null,
-          contract_value: data.contract_value ? parseFloat(data.contract_value) / 100 : null,
-          payment_method: data.payment_method || null,
-          installments_count: data.installments_count ? parseInt(data.installments_count) : null,
-          installments_due_date: data.installments_due_date || null,
-          notes: data.notes || null,
-          user_id: user.id,
-          status: "Novo",
-        });
+      const { error } = await supabase.from("clients").insert({
+        id: clientId,
+        full_name: data.full_name,
+        email: data.email,
+        phone: data.phone || null,
+        address: data.address || null,
+        rg: data.rg || null,
+        cpf: data.cpf || null,
+        education: data.education || null,
+        area_of_interest: data.area_of_interest || null,
+        region: data.region || null,
+        linkedin_url: data.linkedin_url || null,
+        resume_url: resumeUrl,
+        photo_url: photoPath,
+        contract_number: data.contract_number || null,
+        contract_start_date: data.contract_start_date || null,
+        contract_end_date: data.contract_end_date || null,
+        contract_value: data.contract_value ? parseFloat(data.contract_value) / 100 : null,
+        payment_method: data.payment_method || null,
+        installments_count: data.installments_count ? parseInt(data.installments_count) : null,
+        installments_due_date: data.installments_due_date || null,
+        notes: data.notes || null,
+        user_id: user.id,
+        status: "Novo",
+      });
 
       if (error) throw error;
 
@@ -305,14 +346,15 @@ const Admin = () => {
 
       toast({ title: "Cliente adicionado com sucesso!" });
       setIsAddingClient(false);
-      fetchClients();
+      await fetchClients();
     } catch (error: unknown) {
-      console.error('Error adding client');
+      console.error("Error adding client");
       toast({
         title: "Erro ao adicionar cliente",
         description: getUserFriendlyError(error, "Não foi possível adicionar o cliente. Tente novamente."),
         variant: "destructive",
       });
+      throw error;
     }
   };
 
