@@ -68,6 +68,7 @@ import { ClientForm, ClientFormData } from "./ClientForm";
 import { TemperatureBadge, getTemperature, getRelativeTime } from "./admin/TemperatureBadge";
 import { QuickFilters, QuickFilterType } from "./admin/QuickFilters";
 import { InteractionLogDialog } from "./admin/InteractionLogDialog";
+import { EmailDialog } from "./EmailDialog";
 import { Badge } from "@/components/ui/badge";
 import { differenceInHours } from "date-fns";
 
@@ -122,6 +123,7 @@ export const CRMClientTable = ({
   const [currentPage, setCurrentPage] = useState(1);
   const [folderClient, setFolderClient] = useState<CRMClient | null>(null);
   const [loggingClient, setLoggingClient] = useState<CRMClient | null>(null);
+  const [emailClient, setEmailClient] = useState<CRMClient | null>(null);
   const itemsPerPage = 10;
 
   const isIncomplete = (client: CRMClient) => {
@@ -303,12 +305,6 @@ export const CRMClientTable = ({
     const cleanPhone = phone.replace(/\D/g, "");
     const message = encodeURIComponent(`Olá ${name}, tudo bem?`);
     window.open(`https://wa.me/55${cleanPhone}?text=${message}`, "_blank");
-  };
-
-  const openEmail = (email: string, name: string) => {
-    const subject = encodeURIComponent(`Person Corp - Contato`);
-    const body = encodeURIComponent(`Olá ${name},\n\n`);
-    window.open(`mailto:${email}?subject=${subject}&body=${body}`, "_blank");
   };
 
   if (clients.length === 0) {
@@ -506,7 +502,7 @@ export const CRMClientTable = ({
                                 variant="ghost"
                                 size="icon"
                                 className="h-8 w-8 text-blue-600 hover:bg-blue-100 hover:text-blue-700"
-                                onClick={() => openEmail(client.email, client.full_name)}
+                                onClick={() => setEmailClient(client)}
                               >
                                 <Mail className="h-4 w-4" />
                               </Button>
@@ -661,7 +657,7 @@ export const CRMClientTable = ({
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => openEmail(client.email, client.full_name)}
+                      onClick={() => setEmailClient(client)}
                       className="flex-1 text-blue-600 hover:bg-blue-50"
                     >
                       <Mail className="h-4 w-4 mr-1" />
@@ -867,6 +863,16 @@ export const CRMClientTable = ({
           clientId={loggingClient.id}
           clientName={loggingClient.full_name}
           onSuccess={onRefresh}
+        />
+      )}
+
+      {/* Email Dialog */}
+      {emailClient && (
+        <EmailDialog
+          open={!!emailClient}
+          onOpenChange={() => setEmailClient(null)}
+          clientName={emailClient.full_name}
+          clientEmail={emailClient.email}
         />
       )}
     </TooltipProvider>
