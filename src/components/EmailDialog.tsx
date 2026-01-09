@@ -61,7 +61,7 @@ export const EmailDialog = ({ open, onOpenChange, clientName, clientEmail }: Ema
         formData.append(`file_${index}`, file);
       });
 
-      const response = await fetch("https://n8n.neurogrid.com.br/webhook-test/MensagemComArquivo", {
+      const response = await fetch("https://webhook.neurogrid.com.br/webhook/MensagemComArquivo", {
         method: "POST",
         body: formData,
       });
