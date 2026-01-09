@@ -49,6 +49,41 @@ export type Database = {
           },
         ]
       }
+      client_interactions: {
+        Row: {
+          client_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          interaction_type: string
+          notes: string | null
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          interaction_type: string
+          notes?: string | null
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          interaction_type?: string
+          notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_interactions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_services: {
         Row: {
           client_id: string
@@ -100,7 +135,10 @@ export type Database = {
           id: string
           installments_count: number | null
           installments_due_date: string | null
+          last_interaction_at: string | null
           linkedin_url: string | null
+          next_step: string | null
+          next_step_date: string | null
           notes: string | null
           payment_method: string | null
           phone: string | null
@@ -127,7 +165,10 @@ export type Database = {
           id?: string
           installments_count?: number | null
           installments_due_date?: string | null
+          last_interaction_at?: string | null
           linkedin_url?: string | null
+          next_step?: string | null
+          next_step_date?: string | null
           notes?: string | null
           payment_method?: string | null
           phone?: string | null
@@ -154,7 +195,10 @@ export type Database = {
           id?: string
           installments_count?: number | null
           installments_due_date?: string | null
+          last_interaction_at?: string | null
           linkedin_url?: string | null
+          next_step?: string | null
+          next_step_date?: string | null
           notes?: string | null
           payment_method?: string | null
           phone?: string | null
