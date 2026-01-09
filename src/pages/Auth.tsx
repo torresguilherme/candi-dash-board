@@ -6,8 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Users } from "lucide-react";
 import { z } from "zod";
+import logoBlue from "@/assets/logo-blue.png";
 import { getUserFriendlyError } from "@/lib/error-utils";
 
 const authSchema = z.object({
@@ -100,12 +100,9 @@ const Auth = () => {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-4">
           <div className="flex justify-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-              <Users className="h-8 w-8" />
-            </div>
+            <img src={logoBlue} alt="Person Corp" className="h-20 w-auto" />
           </div>
           <div className="text-center">
-            <CardTitle className="text-2xl">Person Corp</CardTitle>
             <CardDescription>
               {isLogin ? "Entre na sua conta" : "Crie sua conta"}
             </CardDescription>

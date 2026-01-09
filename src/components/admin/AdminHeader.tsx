@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { LogOut, Menu } from "lucide-react";
-import logo from "@/assets/logo.png";
+import logoWhite from "@/assets/logo-white.png";
 
 interface AdminHeaderProps {
   onSignOut: () => void;
@@ -19,7 +19,7 @@ export const AdminHeader = ({ onSignOut, onToggleSidebar }: AdminHeaderProps) =>
               </Button>
             )}
             <div className="flex items-center gap-3">
-              <img src={logo} alt="Person Corp" className="h-12 object-contain" />
+              <img src={logoWhite} alt="Person Corp" className="h-8 object-contain" />
             </div>
           </div>
           
