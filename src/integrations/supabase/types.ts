@@ -88,25 +88,31 @@ export type Database = {
         Row: {
           client_id: string
           created_at: string
+          delivered_date: string | null
           id: string
           is_active: boolean
           notes: string | null
+          scheduled_date: string | null
           service_type: string
         }
         Insert: {
           client_id: string
           created_at?: string
+          delivered_date?: string | null
           id?: string
           is_active?: boolean
           notes?: string | null
+          scheduled_date?: string | null
           service_type: string
         }
         Update: {
           client_id?: string
           created_at?: string
+          delivered_date?: string | null
           id?: string
           is_active?: boolean
           notes?: string | null
+          scheduled_date?: string | null
           service_type?: string
         }
         Relationships: [
