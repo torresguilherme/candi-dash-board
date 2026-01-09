@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Users } from "lucide-react";
 import { z } from "zod";
+import { getUserFriendlyError } from "@/lib/error-utils";
 
 const authSchema = z.object({
   email: z.string().email("Email inválido"),
@@ -46,19 +47,11 @@ const Auth = () => {
         });
 
         if (error) {
-          if (error.message.includes("Invalid login credentials")) {
-            toast({
-              title: "Erro ao fazer login",
-              description: "Email ou senha incorretos",
-              variant: "destructive",
-            });
-          } else {
-            toast({
-              title: "Erro ao fazer login",
-              description: error.message,
-              variant: "destructive",
-            });
-          }
+          toast({
+            title: "Erro ao fazer login",
+            description: getUserFriendlyError(error, "Não foi possível fazer login. Verifique suas credenciais."),
+            variant: "destructive",
+          });
           return;
         }
 
@@ -77,19 +70,11 @@ const Auth = () => {
         });
 
         if (error) {
-          if (error.message.includes("already registered")) {
-            toast({
-              title: "Erro ao criar conta",
-              description: "Este email já está cadastrado",
-              variant: "destructive",
-            });
-          } else {
-            toast({
-              title: "Erro ao criar conta",
-              description: error.message,
-              variant: "destructive",
-            });
-          }
+          toast({
+            title: "Erro ao criar conta",
+            description: getUserFriendlyError(error, "Não foi possível criar a conta. Tente novamente."),
+            variant: "destructive",
+          });
           return;
         }
 
@@ -99,10 +84,10 @@ const Auth = () => {
         });
         setIsLogin(true);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Erro",
-        description: error.message || "Ocorreu um erro inesperado",
+        description: getUserFriendlyError(error),
         variant: "destructive",
       });
     } finally {

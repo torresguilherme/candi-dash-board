@@ -23,6 +23,7 @@ import { EngagementChart } from "@/components/admin/EngagementChart";
 import { ImportExcelDialog } from "@/components/ImportExcelDialog";
 import { getTemperature } from "@/components/admin/TemperatureBadge";
 import { differenceInDays, differenceInHours } from "date-fns";
+import { getUserFriendlyError } from "@/lib/error-utils";
 
 const Admin = () => {
   const { user, isAdmin, loading, signOut } = useAuth();
@@ -64,11 +65,11 @@ const Admin = () => {
       if (error) throw error;
 
       setClients(data || []);
-    } catch (error: any) {
-      console.error('Error fetching clients:', error);
+    } catch (error: unknown) {
+      console.error('Error fetching clients');
       toast({
         title: "Erro ao carregar clientes",
-        description: "Não foi possível carregar a lista de clientes. Tente novamente.",
+        description: getUserFriendlyError(error, "Não foi possível carregar a lista de clientes. Tente novamente."),
         variant: "destructive",
       });
     } finally {
@@ -145,11 +146,11 @@ const Admin = () => {
 
       toast({ title: "Cliente atualizado com sucesso!" });
       fetchClients();
-    } catch (error: any) {
-      console.error('Error updating client:', error);
+    } catch (error: unknown) {
+      console.error('Error updating client');
       toast({
         title: "Erro ao atualizar cliente",
-        description: error.message,
+        description: getUserFriendlyError(error, "Não foi possível atualizar o cliente. Tente novamente."),
         variant: "destructive",
       });
     }
@@ -171,11 +172,11 @@ const Admin = () => {
       });
 
       fetchClients();
-    } catch (error: any) {
-      console.error('Error deleting client:', error);
+    } catch (error: unknown) {
+      console.error('Error deleting client');
       toast({
         title: "Erro ao excluir cliente",
-        description: error.message,
+        description: getUserFriendlyError(error, "Não foi possível excluir o cliente. Tente novamente."),
         variant: "destructive",
       });
     }
@@ -234,11 +235,11 @@ const Admin = () => {
       toast({ title: "Cliente adicionado com sucesso!" });
       setIsAddingClient(false);
       fetchClients();
-    } catch (error: any) {
-      console.error('Error adding client:', error);
+    } catch (error: unknown) {
+      console.error('Error adding client');
       toast({
         title: "Erro ao adicionar cliente",
-        description: error.message,
+        description: getUserFriendlyError(error, "Não foi possível adicionar o cliente. Tente novamente."),
         variant: "destructive",
       });
     }
@@ -259,11 +260,11 @@ const Admin = () => {
       toast({
         title: "Status atualizado com sucesso!",
       });
-    } catch (error: any) {
-      console.error('Error updating status:', error);
+    } catch (error: unknown) {
+      console.error('Error updating status');
       toast({
         title: "Erro ao atualizar status",
-        description: error.message,
+        description: getUserFriendlyError(error, "Não foi possível atualizar o status. Tente novamente."),
         variant: "destructive",
       });
     }
@@ -284,11 +285,11 @@ const Admin = () => {
       toast({
         title: "Clientes excluídos com sucesso!",
       });
-    } catch (error: any) {
-      console.error('Error deleting clients:', error);
+    } catch (error: unknown) {
+      console.error('Error deleting clients');
       toast({
         title: "Erro ao excluir clientes",
-        description: error.message,
+        description: getUserFriendlyError(error, "Não foi possível excluir os clientes. Tente novamente."),
         variant: "destructive",
       });
     }
