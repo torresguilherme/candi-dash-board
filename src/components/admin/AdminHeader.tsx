@@ -9,7 +9,7 @@ interface AdminHeaderProps {
 
 export const AdminHeader = ({ onSignOut, onToggleSidebar }: AdminHeaderProps) => {
   return (
-    <header className="sticky top-0 z-50 border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
+    <header className="sticky top-0 z-50 border-b bg-primary text-primary-foreground">
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-4">
@@ -28,7 +28,7 @@ export const AdminHeader = ({ onSignOut, onToggleSidebar }: AdminHeaderProps) =>
               variant="ghost" 
               size="sm"
               onClick={onSignOut}
-              className="text-muted-foreground hover:text-foreground"
+              className="text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10"
             >
               <LogOut className="h-4 w-4 sm:mr-2" />
               <span className="hidden sm:inline">Sair</span>
