@@ -45,10 +45,10 @@ export const CandidateDocuments = ({ candidateId, candidateName }: CandidateDocu
   const fetchDocuments = async () => {
     try {
       setLoading(true);
-      const { data, error } = await (supabase as any)
-        .from('candidate_documents')
+      const { data, error } = await supabase
+        .from('client_documents')
         .select('*')
-        .eq('candidate_id', candidateId)
+        .eq('client_id', candidateId)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -90,10 +90,10 @@ export const CandidateDocuments = ({ candidateId, candidateName }: CandidateDocu
         .getPublicUrl(fileName);
 
       // Save document record
-      const { error: dbError } = await (supabase as any)
-        .from('candidate_documents')
+      const { error: dbError } = await supabase
+        .from('client_documents')
         .insert({
-          candidate_id: candidateId,
+          client_id: candidateId,
           file_name: file.name,
           file_path: fileName,
           file_size: file.size,
@@ -142,8 +142,8 @@ export const CandidateDocuments = ({ candidateId, candidateName }: CandidateDocu
       if (storageError) throw storageError;
 
       // Delete from database
-      const { error: dbError } = await (supabase as any)
-        .from('candidate_documents')
+      const { error: dbError } = await supabase
+        .from('client_documents')
         .delete()
         .eq('id', document.id);
 
