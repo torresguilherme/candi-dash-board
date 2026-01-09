@@ -424,7 +424,7 @@ export const CRMClientTable = ({
                     </button>
                   </TableHead>
                   <TableHead className="min-w-[160px]">Próximo Passo</TableHead>
-                  <TableHead className="text-right pr-4">Ações Rápidas</TableHead>
+                  <TableHead className="text-center">Ações Rápidas</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -491,8 +491,8 @@ export const CRMClientTable = ({
                           <span className="text-xs text-muted-foreground italic">Não definido</span>
                         )}
                       </TableCell>
-                      <TableCell className="py-4 pr-2">
-                        <div className="flex items-center justify-end gap-1">
+                      <TableCell className="py-4">
+                        <div className="flex items-center justify-center gap-1">
                           {/* Quick action buttons - always visible */}
                           {client.phone && (
                             <Tooltip>
@@ -536,13 +536,12 @@ export const CRMClientTable = ({
                             <TooltipContent>Registrar Interação</TooltipContent>
                           </Tooltip>
 
-                          {/* Secondary actions on hover */}
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                                className="h-8 w-8 hover:bg-primary/10"
                                 onClick={() => setViewingClient(client)}
                               >
                                 <Eye className="h-4 w-4 text-primary" />
@@ -571,10 +570,10 @@ export const CRMClientTable = ({
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                                  className="h-8 w-8 text-orange-600 hover:bg-orange-100 hover:text-orange-700"
                                   onClick={() => window.open(client.resume_url!, "_blank", "noopener,noreferrer")}
                                 >
-                                  <FileText className="h-4 w-4 text-orange-600" />
+                                  <FileText className="h-4 w-4" />
                                 </Button>
                               </TooltipTrigger>
                               <TooltipContent>Ver Currículo</TooltipContent>
@@ -586,7 +585,7 @@ export const CRMClientTable = ({
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                                className="h-8 w-8 hover:bg-muted"
                                 onClick={() => setEditingClient(client)}
                               >
                                 <Pencil className="h-4 w-4" />
@@ -600,7 +599,7 @@ export const CRMClientTable = ({
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-destructive"
+                                className="h-8 w-8 text-destructive hover:bg-destructive/10 hover:text-destructive"
                                 onClick={() => setDeletingId(client.id)}
                               >
                                 <Trash2 className="h-4 w-4" />
