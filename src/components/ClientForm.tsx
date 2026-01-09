@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, UseFormReturn } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
@@ -34,7 +34,8 @@ import {
   DollarSign,
   GraduationCap,
   Camera,
-  X
+  X,
+  CalendarClock
 } from "lucide-react";
 
 const clientFormSchema = z.object({
@@ -82,10 +83,30 @@ const clientFormSchema = z.object({
     pnl_practitioner: z.boolean().default(false),
   }).optional(),
   
-  // Datas dos Serviços
+  // Datas dos Serviços - agora com scheduled e delivered para cada serviço
   service_dates: z.object({
     career_mentoring_dates: z.string().optional(),
+    career_mentoring_scheduled: z.string().optional(),
+    career_mentoring_delivered: z.string().optional(),
+    market_mapping_scheduled: z.string().optional(),
+    market_mapping_delivered: z.string().optional(),
+    support_material_scheduled: z.string().optional(),
+    support_material_delivered: z.string().optional(),
+    interview_pitch_scheduled: z.string().optional(),
+    interview_pitch_delivered: z.string().optional(),
+    resume_restructuring_scheduled: z.string().optional(),
+    resume_restructuring_delivered: z.string().optional(),
+    behavioral_assessment_scheduled: z.string().optional(),
+    behavioral_assessment_delivered: z.string().optional(),
+    brain_preference_scheduled: z.string().optional(),
+    brain_preference_delivered: z.string().optional(),
     company_referral_duration: z.string().optional(),
+    company_referral_scheduled: z.string().optional(),
+    company_referral_delivered: z.string().optional(),
+    linkedin_service_scheduled: z.string().optional(),
+    linkedin_service_delivered: z.string().optional(),
+    personal_marketing_scheduled: z.string().optional(),
+    personal_marketing_delivered: z.string().optional(),
     cnv_scheduled: z.string().optional(),
     cnv_rescheduled: z.string().optional(),
     cnv_delivered: z.string().optional(),
@@ -141,6 +162,78 @@ const formatCurrency = (value: string) => {
   const amount = parseFloat(numbers) / 100;
   return amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 };
+
+// Helper component for service cards with dates
+const ServiceCard = ({
+  form,
+  name,
+  label,
+  description,
+  children,
+}: {
+  form: UseFormReturn<ClientFormData>;
+  name: `services.${keyof NonNullable<ClientFormData["services"]>}`;
+  label: string;
+  description?: string;
+  children?: React.ReactNode;
+}) => (
+  <div className="p-4 border rounded-lg space-y-3">
+    <FormField
+      control={form.control}
+      name={name}
+      render={({ field }) => (
+        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+          <FormControl>
+            <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+          </FormControl>
+          <div className="space-y-1 leading-none">
+            <FormLabel className="cursor-pointer font-medium">{label}</FormLabel>
+            {description && (
+              <p className="text-xs text-muted-foreground">{description}</p>
+            )}
+          </div>
+        </FormItem>
+      )}
+    />
+    {children}
+  </div>
+);
+
+// Helper component for date fields
+const ServiceDateFields = ({
+  form,
+  prefix,
+}: {
+  form: UseFormReturn<ClientFormData>;
+  prefix: string;
+}) => (
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-3 border-t border-dashed">
+    <FormField
+      control={form.control}
+      name={`service_dates.${prefix}_scheduled` as any}
+      render={({ field }) => (
+        <FormItem>
+          <FormLabel className="text-sm text-muted-foreground">Data Prevista</FormLabel>
+          <FormControl>
+            <Input type="date" {...field} value={field.value || ""} />
+          </FormControl>
+        </FormItem>
+      )}
+    />
+    <FormField
+      control={form.control}
+      name={`service_dates.${prefix}_delivered` as any}
+      render={({ field }) => (
+        <FormItem>
+          <FormLabel className="text-sm text-muted-foreground">Data de Entrega</FormLabel>
+          <FormControl>
+            <Input type="date" {...field} value={field.value || ""} />
+          </FormControl>
+        </FormItem>
+      )}
+    />
+  </div>
+);
 
 export const ClientForm = ({
   onSubmit,
@@ -652,210 +745,216 @@ export const ClientForm = ({
               <Briefcase className="h-5 w-5 text-primary" />
               Serviços Contratados
             </CardTitle>
+            <p className="text-sm text-muted-foreground flex items-center gap-1">
+              <CalendarClock className="h-4 w-4" />
+              Defina datas de entrega para controle no painel
+            </p>
           </CardHeader>
           <CardContent className="px-0 space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
+            <div className="grid grid-cols-1 gap-4">
+              {/* Mentoria de Carreira */}
+              <ServiceCard
+                form={form}
                 name="services.career_mentoring"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 p-4 border rounded-lg">
-                    <FormControl>
-                      <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel className="cursor-pointer">Gerenciamento/Mentoria de Carreira</FormLabel>
-                      <FormDescription className="text-xs">Inclui reuniões periódicas</FormDescription>
+                label="Gerenciamento/Mentoria de Carreira"
+                description="Inclui reuniões periódicas"
+              >
+                {watchServices?.career_mentoring && (
+                  <div className="space-y-3 pt-3 border-t border-dashed">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <FormField
+                        control={form.control}
+                        name="service_dates.career_mentoring_scheduled"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm text-muted-foreground">Data Prevista</FormLabel>
+                            <FormControl>
+                              <Input type="date" {...field} value={field.value || ""} />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="service_dates.career_mentoring_delivered"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm text-muted-foreground">Data de Entrega</FormLabel>
+                            <FormControl>
+                              <Input type="date" {...field} value={field.value || ""} />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
                     </div>
-                  </FormItem>
+                    <FormField
+                      control={form.control}
+                      name="service_dates.career_mentoring_dates"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm text-muted-foreground">Datas das Reuniões</FormLabel>
+                          <FormControl>
+                            <Textarea 
+                              placeholder="Ex: 01/02/2024, 15/02/2024..." 
+                              {...field}
+                              className="h-16"
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                 )}
-              />
+              </ServiceCard>
 
-              <FormField
-                control={form.control}
+              {/* Mapeamento de Mercado */}
+              <ServiceCard
+                form={form}
                 name="services.market_mapping"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 p-4 border rounded-lg">
-                    <FormControl>
-                      <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel className="cursor-pointer">Mapeamento de Mercado</FormLabel>
-                    </div>
-                  </FormItem>
+                label="Mapeamento de Mercado"
+              >
+                {watchServices?.market_mapping && (
+                  <ServiceDateFields form={form} prefix="market_mapping" />
                 )}
-              />
+              </ServiceCard>
 
-              <FormField
-                control={form.control}
+              {/* Material de Apoio */}
+              <ServiceCard
+                form={form}
                 name="services.support_material"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 p-4 border rounded-lg">
-                    <FormControl>
-                      <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel className="cursor-pointer">Material de Apoio</FormLabel>
-                    </div>
-                  </FormItem>
+                label="Material de Apoio"
+              >
+                {watchServices?.support_material && (
+                  <ServiceDateFields form={form} prefix="support_material" />
                 )}
-              />
+              </ServiceCard>
 
-              <FormField
-                control={form.control}
+              {/* Pitch de Entrevista */}
+              <ServiceCard
+                form={form}
                 name="services.interview_pitch"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 p-4 border rounded-lg">
-                    <FormControl>
-                      <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel className="cursor-pointer">Pitch de Entrevista</FormLabel>
-                    </div>
-                  </FormItem>
+                label="Pitch de Entrevista"
+              >
+                {watchServices?.interview_pitch && (
+                  <ServiceDateFields form={form} prefix="interview_pitch" />
                 )}
-              />
+              </ServiceCard>
 
-              <FormField
-                control={form.control}
+              {/* Reestruturação Curricular */}
+              <ServiceCard
+                form={form}
                 name="services.resume_restructuring"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 p-4 border rounded-lg">
-                    <FormControl>
-                      <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel className="cursor-pointer">Reestruturação Curricular</FormLabel>
-                    </div>
-                  </FormItem>
+                label="Reestruturação Curricular"
+              >
+                {watchServices?.resume_restructuring && (
+                  <ServiceDateFields form={form} prefix="resume_restructuring" />
                 )}
-              />
+              </ServiceCard>
 
-              <FormField
-                control={form.control}
+              {/* Avaliação de Perfil Comportamental */}
+              <ServiceCard
+                form={form}
                 name="services.behavioral_assessment"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 p-4 border rounded-lg">
-                    <FormControl>
-                      <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel className="cursor-pointer">Avaliação de Perfil Comportamental</FormLabel>
-                    </div>
-                  </FormItem>
+                label="Avaliação de Perfil Comportamental"
+              >
+                {watchServices?.behavioral_assessment && (
+                  <ServiceDateFields form={form} prefix="behavioral_assessment" />
                 )}
-              />
+              </ServiceCard>
 
-              <FormField
-                control={form.control}
+              {/* Avaliação Preferência Cerebral */}
+              <ServiceCard
+                form={form}
                 name="services.brain_preference"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 p-4 border rounded-lg">
-                    <FormControl>
-                      <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel className="cursor-pointer">Avaliação Preferência Cerebral</FormLabel>
-                    </div>
-                  </FormItem>
+                label="Avaliação Preferência Cerebral"
+              >
+                {watchServices?.brain_preference && (
+                  <ServiceDateFields form={form} prefix="brain_preference" />
                 )}
-              />
+              </ServiceCard>
 
-              <FormField
-                control={form.control}
+              {/* Direcionamento para Empresas */}
+              <ServiceCard
+                form={form}
                 name="services.company_referral"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 p-4 border rounded-lg">
-                    <FormControl>
-                      <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel className="cursor-pointer">Direcionamento para Empresas</FormLabel>
-                      <FormDescription className="text-xs">4 a 12 meses</FormDescription>
+                label="Direcionamento para Empresas"
+                description="4 a 12 meses"
+              >
+                {watchServices?.company_referral && (
+                  <div className="space-y-3 pt-3 border-t border-dashed">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <FormField
+                        control={form.control}
+                        name="service_dates.company_referral_duration"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm text-muted-foreground">Duração</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Selecione" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {[4, 5, 6, 7, 8, 9, 10, 11, 12].map((m) => (
+                                  <SelectItem key={m} value={String(m)}>{m} meses</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="service_dates.company_referral_scheduled"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm text-muted-foreground">Data Prevista</FormLabel>
+                            <FormControl>
+                              <Input type="date" {...field} value={field.value || ""} />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="service_dates.company_referral_delivered"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm text-muted-foreground">Data de Entrega</FormLabel>
+                            <FormControl>
+                              <Input type="date" {...field} value={field.value || ""} />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
                     </div>
-                  </FormItem>
+                  </div>
                 )}
-              />
+              </ServiceCard>
 
-              <FormField
-                control={form.control}
+              {/* LinkedIn */}
+              <ServiceCard
+                form={form}
                 name="services.linkedin_service"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 p-4 border rounded-lg">
-                    <FormControl>
-                      <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel className="cursor-pointer">LinkedIn</FormLabel>
-                    </div>
-                  </FormItem>
+                label="LinkedIn"
+              >
+                {watchServices?.linkedin_service && (
+                  <ServiceDateFields form={form} prefix="linkedin_service" />
                 )}
-              />
+              </ServiceCard>
 
-              <FormField
-                control={form.control}
+              {/* Marketing Pessoal */}
+              <ServiceCard
+                form={form}
                 name="services.personal_marketing"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 p-4 border rounded-lg">
-                    <FormControl>
-                      <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel className="cursor-pointer">Marketing Pessoal</FormLabel>
-                    </div>
-                  </FormItem>
+                label="Marketing Pessoal"
+              >
+                {watchServices?.personal_marketing && (
+                  <ServiceDateFields form={form} prefix="personal_marketing" />
                 )}
-              />
+              </ServiceCard>
             </div>
-
-            {/* Datas de serviços específicos */}
-            {watchServices?.career_mentoring && (
-              <div className="p-4 bg-muted/50 rounded-lg">
-                <FormField
-                  control={form.control}
-                  name="service_dates.career_mentoring_dates"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Datas das Reuniões de Mentoria</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          placeholder="Ex: 01/02/2024, 15/02/2024, 01/03/2024..." 
-                          {...field}
-                          className="h-20"
-                        />
-                      </FormControl>
-                      <FormDescription>Insira as datas das reuniões separadas por vírgula</FormDescription>
-                    </FormItem>
-                  )}
-                />
-              </div>
-            )}
-
-            {watchServices?.company_referral && (
-              <div className="p-4 bg-muted/50 rounded-lg">
-                <FormField
-                  control={form.control}
-                  name="service_dates.company_referral_duration"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Duração do Direcionamento</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {[4, 5, 6, 7, 8, 9, 10, 11, 12].map((m) => (
-                            <SelectItem key={m} value={String(m)}>{m} meses</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </FormItem>
-                  )}
-                />
-              </div>
-            )}
           </CardContent>
         </Card>
 

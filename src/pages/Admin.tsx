@@ -22,6 +22,7 @@ import { CRMClientTable, CRMClient } from "@/components/CRMClientTable";
 import { EngagementChart } from "@/components/admin/EngagementChart";
 import { ImportExcelDialog } from "@/components/ImportExcelDialog";
 import { getTemperature } from "@/components/admin/TemperatureBadge";
+import { ServiceAlertsCard } from "@/components/admin/ServiceAlertsCard";
 import { differenceInDays, differenceInHours } from "date-fns";
 import { getUserFriendlyError } from "@/lib/error-utils";
 
@@ -74,6 +75,70 @@ const Admin = () => {
       });
     } finally {
       setLoadingClients(false);
+    }
+  };
+
+  const saveClientServices = async (clientId: string, data: ClientFormData) => {
+    const services = data.services || {};
+    const serviceDates = data.service_dates || {};
+    
+    const serviceTypes = [
+      'career_mentoring',
+      'market_mapping',
+      'support_material',
+      'interview_pitch',
+      'resume_restructuring',
+      'behavioral_assessment',
+      'brain_preference',
+      'company_referral',
+      'linkedin_service',
+      'personal_marketing',
+    ] as const;
+
+    for (const serviceType of serviceTypes) {
+      const isActive = services[serviceType];
+      const scheduledKey = `${serviceType}_scheduled` as keyof typeof serviceDates;
+      const deliveredKey = `${serviceType}_delivered` as keyof typeof serviceDates;
+      
+      const scheduledDate = serviceDates[scheduledKey] || null;
+      const deliveredDate = serviceDates[deliveredKey] || null;
+
+      // Check if service already exists
+      const { data: existing } = await supabase
+        .from('client_services')
+        .select('id')
+        .eq('client_id', clientId)
+        .eq('service_type', serviceType)
+        .maybeSingle();
+
+      if (isActive) {
+        if (existing) {
+          // Update existing
+          await supabase
+            .from('client_services')
+            .update({
+              scheduled_date: scheduledDate,
+              delivered_date: deliveredDate,
+              is_active: !deliveredDate,
+            })
+            .eq('id', existing.id);
+        } else {
+          // Insert new
+          await supabase.from('client_services').insert({
+            client_id: clientId,
+            service_type: serviceType,
+            scheduled_date: scheduledDate,
+            delivered_date: deliveredDate,
+            is_active: !deliveredDate,
+          });
+        }
+      } else if (existing) {
+        // Delete if unchecked
+        await supabase
+          .from('client_services')
+          .delete()
+          .eq('id', existing.id);
+      }
     }
   };
 
@@ -143,6 +208,9 @@ const Admin = () => {
         .eq('id', id);
 
       if (error) throw error;
+
+      // Save services with dates
+      await saveClientServices(id, data);
 
       toast({ title: "Cliente atualizado com sucesso!" });
       fetchClients();
@@ -231,6 +299,9 @@ const Admin = () => {
         });
 
       if (error) throw error;
+
+      // Save services with dates
+      await saveClientServices(clientId, data);
 
       toast({ title: "Cliente adicionado com sucesso!" });
       setIsAddingClient(false);
@@ -387,8 +458,11 @@ const Admin = () => {
           />
         </div>
 
-        {/* Engagement Charts */}
-        {clients.length > 0 && <EngagementChart clients={clients} />}
+        {/* Service Alerts and Engagement Charts */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <ServiceAlertsCard onRefresh={fetchClients} />
+          {clients.length > 0 && <EngagementChart clients={clients} />}
+        </div>
 
         {/* CRM Client Table */}
         <Card className="border-0 shadow-sm overflow-hidden">
