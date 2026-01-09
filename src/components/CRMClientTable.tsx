@@ -84,9 +84,18 @@ export interface CRMClient {
   linkedin_url: string | null;
   created_at: string;
   cpf: string | null;
+  rg: string | null;
+  address: string | null;
   photo_url: string | null;
   education: string | null;
   contract_value: number | null;
+  contract_number: string | null;
+  contract_start_date: string | null;
+  contract_end_date: string | null;
+  payment_method: string | null;
+  installments_count: number | null;
+  installments_due_date: string | null;
+  notes: string | null;
   last_interaction_at: string | null;
   next_step: string | null;
   next_step_date: string | null;
@@ -538,6 +547,20 @@ export const CRMClientTable = ({
                             <TooltipContent>Visualizar</TooltipContent>
                           </Tooltip>
 
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-amber-600 hover:bg-amber-100 hover:text-amber-700"
+                                onClick={() => setFolderClient(client)}
+                              >
+                                <FolderOpen className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Documentos</TooltipContent>
+                          </Tooltip>
+
                           {client.resume_url && (
                             <Tooltip>
                               <TooltipTrigger asChild>
@@ -545,12 +568,12 @@ export const CRMClientTable = ({
                                   variant="ghost"
                                   size="icon"
                                   className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
-                                  onClick={() => handleDownloadResume(client.resume_url!, client.full_name)}
+                                  onClick={() => window.open(client.resume_url!, '_blank')}
                                 >
                                   <FileText className="h-4 w-4 text-orange-600" />
                                 </Button>
                               </TooltipTrigger>
-                              <TooltipContent>Currículo</TooltipContent>
+                              <TooltipContent>Ver Currículo</TooltipContent>
                             </Tooltip>
                           )}
 
@@ -785,9 +808,47 @@ export const CRMClientTable = ({
                   <p className="text-sm font-medium text-muted-foreground">Área</p>
                   <p className="text-base">{viewingClient.area_of_interest || "Não informado"}</p>
                 </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Região</p>
+                  <p className="text-base">{viewingClient.region || "Não informado"}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">LinkedIn</p>
+                  {viewingClient.linkedin_url ? (
+                    <a href={viewingClient.linkedin_url} target="_blank" rel="noopener noreferrer" className="text-base text-primary hover:underline flex items-center gap-1">
+                      Ver Perfil <ExternalLink className="h-3 w-3" />
+                    </a>
+                  ) : (
+                    <p className="text-base">Não informado</p>
+                  )}
+                </div>
               </div>
 
-              <div className="flex gap-2 pt-4">
+              {/* Document Actions */}
+              <div className="flex gap-2 pt-4 border-t">
+                <Button 
+                  variant="outline" 
+                  className="flex-1"
+                  onClick={() => {
+                    setViewingClient(null);
+                    setFolderClient(viewingClient);
+                  }}
+                >
+                  <FolderOpen className="h-4 w-4 mr-2" />
+                  Ver Documentos
+                </Button>
+                {viewingClient.resume_url && (
+                  <Button 
+                    variant="outline" 
+                    onClick={() => window.open(viewingClient.resume_url!, '_blank')}
+                  >
+                    <FileText className="h-4 w-4 mr-2" />
+                    Ver Currículo
+                  </Button>
+                )}
+              </div>
+
+              <div className="flex gap-2 pt-2">
                 <Button className="flex-1" onClick={() => setLoggingClient(viewingClient)}>
                   <Plus className="h-4 w-4 mr-2" />
                   Registrar Interação
@@ -816,10 +877,24 @@ export const CRMClientTable = ({
                   full_name: editingClient.full_name,
                   email: editingClient.email,
                   phone: editingClient.phone || "",
+                  address: editingClient.address || "",
+                  rg: editingClient.rg || "",
+                  cpf: editingClient.cpf || "",
+                  education: editingClient.education || "",
                   area_of_interest: editingClient.area_of_interest || "",
                   region: editingClient.region || "",
+                  linkedin_url: editingClient.linkedin_url || "",
+                  contract_number: editingClient.contract_number || "",
+                  contract_start_date: editingClient.contract_start_date || "",
+                  contract_end_date: editingClient.contract_end_date || "",
+                  contract_value: editingClient.contract_value ? String(editingClient.contract_value * 100) : "",
+                  payment_method: editingClient.payment_method || "",
+                  installments_count: editingClient.installments_count ? String(editingClient.installments_count) : "",
+                  installments_due_date: editingClient.installments_due_date || "",
+                  notes: editingClient.notes || "",
                 }}
                 existingPhotoUrl={editingClient.photo_url}
+                currentEmail={editingClient.email}
               />
             )}
           </div>
