@@ -5,82 +5,86 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import logo from "@/assets/logo.png";
+import { getUserFriendlyError, sanitizeForExternalApi } from "@/lib/error-utils";
 
 const Cadastro = () => {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const { toast } = useToast();
 
-  const uploadResume = async (file: File, candidateId: string) => {
+  const uploadResume = async (file: File, submissionId: string) => {
     const fileExt = file.name.split(".").pop();
-    const fileName = `public/${candidateId}.${fileExt}`;
+    // Use public-submissions folder for unauthenticated uploads
+    const fileName = `public-submissions/${submissionId}.${fileExt}`;
 
-    const { error: uploadError } = await supabase.storage.from("resumes").upload(fileName, file, { upsert: true });
+    const { error: uploadError } = await supabase.storage
+      .from("resumes")
+      .upload(fileName, file, { upsert: true });
 
     if (uploadError) throw uploadError;
 
-    const {
-      data: { publicUrl },
-    } = supabase.storage.from("resumes").getPublicUrl(fileName);
-
-    return publicUrl;
+    // Return just the path, not a public URL (bucket is now private)
+    return fileName;
   };
 
   const handleAddCandidate = async (data: CandidateFormData) => {
     setSubmitting(true);
 
     try {
-      const candidateId = crypto.randomUUID();
-      let resumeUrl = null;
+      const submissionId = crypto.randomUUID();
+      let resumePath = null;
 
       if (data.resume instanceof File) {
-        resumeUrl = await uploadResume(data.resume, candidateId);
+        resumePath = await uploadResume(data.resume, submissionId);
       }
 
-      const { error } = await supabase.from("clients").insert({
-        id: candidateId,
-        user_id: null,
+      // Insert into public_submissions table (designed for unauthenticated access)
+      const { error } = await supabase.from("public_submissions").insert({
+        id: submissionId,
         full_name: data.name,
         email: data.email,
-        phone: data.phone,
-        area_of_interest: data.area,
-        region: data.city,
+        phone: data.phone || null,
+        area_of_interest: data.area || null,
+        region: data.city || null,
         linkedin_url: data.linkedin_url || null,
-        resume_url: resumeUrl,
-        status: "Novo",
+        resume_path: resumePath,
+        status: "pending",
       });
 
       if (error) throw error;
 
-      // Send data to webhook
+      // Send sanitized data to webhook
       try {
+        const sanitizedData = sanitizeForExternalApi({
+          id: submissionId,
+          name: data.name,
+          email: data.email,
+          phone: data.phone,
+          area: data.area,
+          city: data.city,
+          linkedin_url: data.linkedin_url || null,
+          resume_path: resumePath,
+          registration_date: new Date().toISOString(),
+        });
+
         await fetch("https://webhook.neurogrid.com.br/webhook/lrb", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({
-            id: candidateId,
-            name: data.name,
-            email: data.email,
-            phone: data.phone,
-            area: data.area,
-            city: data.city,
-            linkedin_url: data.linkedin_url || null,
-            resume_url: resumeUrl,
-            registration_date: new Date().toISOString(),
-          }),
+          body: JSON.stringify(sanitizedData),
         });
       } catch (webhookError) {
-        console.error("Error sending to webhook:", webhookError);
+        // Log webhook errors but don't expose to user
+        console.error("Webhook notification failed");
       }
 
       setSubmitted(true);
-    } catch (error: any) {
-      console.error("Error adding candidate:", error);
+    } catch (error: unknown) {
+      console.error("Submission failed");
       toast({
         title: "Erro ao enviar candidatura",
-        description: error.message,
+        description: getUserFriendlyError(error, "Não foi possível enviar sua candidatura. Tente novamente."),
         variant: "destructive",
       });
     } finally {

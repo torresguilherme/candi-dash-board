@@ -230,6 +230,51 @@ export type Database = {
         }
         Relationships: []
       }
+      public_submissions: {
+        Row: {
+          area_of_interest: string | null
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          linkedin_url: string | null
+          phone: string | null
+          processed_at: string | null
+          processed_by: string | null
+          region: string | null
+          resume_path: string | null
+          status: string
+        }
+        Insert: {
+          area_of_interest?: string | null
+          created_at?: string
+          email: string
+          full_name: string
+          id?: string
+          linkedin_url?: string | null
+          phone?: string | null
+          processed_at?: string | null
+          processed_by?: string | null
+          region?: string | null
+          resume_path?: string | null
+          status?: string
+        }
+        Update: {
+          area_of_interest?: string | null
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          linkedin_url?: string | null
+          phone?: string | null
+          processed_at?: string | null
+          processed_by?: string | null
+          region?: string | null
+          resume_path?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
       service_dates: {
         Row: {
           created_at: string
