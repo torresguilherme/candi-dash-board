@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,28 +7,25 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { 
-  Users, 
   UserPlus, 
-  MapPin, 
-  Briefcase, 
-  Clock, 
   AlertTriangle,
-  CheckCircle2,
-  TrendingUp,
-  DollarSign
+  Calendar,
+  Sparkles,
+  Activity,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { AdminHeader } from "@/components/admin/AdminHeader";
-import { StatsCard } from "@/components/admin/StatsCard";
+import { EngagementStatsCard } from "@/components/admin/EngagementStatsCard";
 import { EmptyState } from "@/components/admin/EmptyState";
 import { LoadingSkeleton } from "@/components/admin/LoadingSkeleton";
-import { ClientTable, Client } from "@/components/ClientTable";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { CRMClientTable, CRMClient } from "@/components/CRMClientTable";
 import { ImportExcelDialog } from "@/components/ImportExcelDialog";
+import { getTemperature } from "@/components/admin/TemperatureBadge";
+import { differenceInDays, differenceInHours } from "date-fns";
 
 const Admin = () => {
   const { user, isAdmin, loading, signOut } = useAuth();
-  const [clients, setClients] = useState<Client[]>([]);
+  const [clients, setClients] = useState<CRMClient[]>([]);
   const [loadingClients, setLoadingClients] = useState(true);
   const [isAddingClient, setIsAddingClient] = useState(false);
   const navigate = useNavigate();
@@ -296,17 +293,23 @@ const Admin = () => {
     }
   };
 
-  // Calculate statistics
-  const stats = {
-    total: clients.length,
-    areas: new Set(clients.map(c => c.area_of_interest).filter(Boolean)).size,
-    cities: new Set(clients.map(c => c.region).filter(Boolean)).size,
-    inProcess: clients.filter(c => c.status === "Em Processo" || c.status === "Em Análise").length,
-    incomplete: clients.filter(c => !c.cpf || !c.phone || !c.resume_url).length,
-    active: clients.filter(c => c.status === "Ativo" || c.status === "Aprovado").length,
-    newClients: clients.filter(c => c.status === "Novo").length,
-    totalValue: clients.reduce((sum, c) => sum + (c.contract_value || 0), 0),
-  };
+  // Calculate CRM engagement statistics
+  const stats = useMemo(() => {
+    const needsAttention = clients.filter(c => getTemperature(c.last_interaction_at) === "cold").length;
+    const newLeads = clients.filter(c => {
+      const hours = differenceInHours(new Date(), new Date(c.created_at));
+      return hours <= 24;
+    }).length;
+    const hotClients = clients.filter(c => getTemperature(c.last_interaction_at) === "hot").length;
+    const healthScore = clients.length > 0 ? Math.round((hotClients / clients.length) * 100) : 0;
+
+    return {
+      needsAttention,
+      newLeads,
+      todayTasks: clients.filter(c => c.next_step_date && differenceInDays(new Date(c.next_step_date), new Date()) === 0).length,
+      healthScore,
+    };
+  }, [clients]);
 
   if (loading || loadingClients) {
     return <LoadingSkeleton />;
@@ -350,111 +353,61 @@ const Admin = () => {
           </div>
         </div>
 
-        {/* Statistics Cards - Top Row */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-          <StatsCard
-            title="Total de Clientes"
-            value={stats.total}
-            icon={Users}
-            colorClass="text-primary bg-primary/10"
-          />
-          <StatsCard
-            title="Clientes Ativos"
-            value={stats.active}
-            icon={CheckCircle2}
-            colorClass="text-green-600 bg-green-100 dark:text-green-400 dark:bg-green-950"
-          />
-          <StatsCard
-            title="Em Processo"
-            value={stats.inProcess}
-            icon={Clock}
-            colorClass="text-amber-600 bg-amber-100 dark:text-amber-400 dark:bg-amber-950"
-          />
-          <StatsCard
-            title="Novos"
-            value={stats.newClients}
-            icon={TrendingUp}
-            colorClass="text-blue-600 bg-blue-100 dark:text-blue-400 dark:bg-blue-950"
-          />
-          <StatsCard
-            title="Cadastros Incompletos"
-            value={stats.incomplete}
+        {/* CRM Engagement Cards */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <EngagementStatsCard
+            title="Atenção Necessária"
+            value={stats.needsAttention}
             icon={AlertTriangle}
-            colorClass="text-orange-600 bg-orange-100 dark:text-orange-400 dark:bg-orange-950"
+            description="Sem contato há +7 dias"
+            variant="danger"
+          />
+          <EngagementStatsCard
+            title="Tarefas Hoje"
+            value={stats.todayTasks}
+            icon={Calendar}
+            description="Próximos passos agendados"
+            variant="warning"
+          />
+          <EngagementStatsCard
+            title="Novos Leads"
+            value={stats.newLeads}
+            icon={Sparkles}
+            description="Últimas 24 horas"
+            variant="info"
+          />
+          <EngagementStatsCard
+            title="Health Score"
+            value={`${stats.healthScore}%`}
+            icon={Activity}
+            description="Clientes engajados"
+            variant={stats.healthScore >= 70 ? "success" : stats.healthScore >= 40 ? "warning" : "danger"}
           />
         </div>
 
-        {/* Secondary Stats Row */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-          <Card className="border-0 shadow-sm bg-gradient-to-br from-card to-muted/20">
-            <CardContent className="p-5 flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
-                <Briefcase className="h-6 w-6 text-primary" />
-              </div>
-              <div>
-                <p className="text-3xl font-bold">{stats.areas}</p>
-                <p className="text-sm text-muted-foreground">Áreas de Atuação</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="border-0 shadow-sm bg-gradient-to-br from-card to-muted/20">
-            <CardContent className="p-5 flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-green-100 dark:bg-green-950">
-                <MapPin className="h-6 w-6 text-green-600 dark:text-green-400" />
-              </div>
-              <div>
-                <p className="text-3xl font-bold">{stats.cities}</p>
-                <p className="text-sm text-muted-foreground">Cidades</p>
-              </div>
-            </CardContent>
-          </Card>
-          {stats.totalValue > 0 && (
-            <Card className="border-0 shadow-sm bg-gradient-to-br from-card to-muted/20">
-              <CardContent className="p-5 flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-100 dark:bg-emerald-950">
-                  <DollarSign className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
-                </div>
-                <div>
-                  <p className="text-3xl font-bold">
-                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(stats.totalValue)}
-                  </p>
-                  <p className="text-sm text-muted-foreground">Valor Total</p>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-
-        {/* Clients Table */}
+        {/* CRM Client Table */}
         <Card className="border-0 shadow-sm overflow-hidden">
           <CardHeader className="pb-4 bg-gradient-to-r from-card to-muted/10">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
-                <CardTitle className="text-xl">Lista de Clientes</CardTitle>
+                <CardTitle className="text-xl">CRM de Clientes</CardTitle>
                 <CardDescription>
-                  Visualize, edite e gerencie todos os clientes cadastrados
+                  Gerencie relacionamentos e acompanhe o engajamento dos clientes
                 </CardDescription>
               </div>
-              <Dialog open={isAddingClient} onOpenChange={setIsAddingClient}>
-                <DialogTrigger asChild>
-                  <Button className="w-full sm:w-auto sm:hidden">
-                    <UserPlus className="h-4 w-4 mr-2" />
-                    Novo Cliente
-                  </Button>
-                </DialogTrigger>
-              </Dialog>
             </div>
           </CardHeader>
           <CardContent className="p-6">
             {clients.length === 0 ? (
               <EmptyState onAddCandidate={() => setIsAddingClient(true)} />
             ) : (
-              <ClientTable
+              <CRMClientTable
                 clients={clients}
                 onEdit={handleEditClient}
                 onDelete={handleDeleteClient}
                 onBulkStatusChange={handleBulkStatusChange}
                 onBulkDelete={handleBulkDelete}
+                onRefresh={fetchClients}
               />
             )}
           </CardContent>
