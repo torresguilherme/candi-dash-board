@@ -19,6 +19,7 @@ import { EngagementStatsCard } from "@/components/admin/EngagementStatsCard";
 import { EmptyState } from "@/components/admin/EmptyState";
 import { LoadingSkeleton } from "@/components/admin/LoadingSkeleton";
 import { CRMClientTable, CRMClient } from "@/components/CRMClientTable";
+import { EngagementChart } from "@/components/admin/EngagementChart";
 import { ImportExcelDialog } from "@/components/ImportExcelDialog";
 import { getTemperature } from "@/components/admin/TemperatureBadge";
 import { differenceInDays, differenceInHours } from "date-fns";
@@ -384,6 +385,9 @@ const Admin = () => {
             variant={stats.healthScore >= 70 ? "success" : stats.healthScore >= 40 ? "warning" : "danger"}
           />
         </div>
+
+        {/* Engagement Charts */}
+        {clients.length > 0 && <EngagementChart clients={clients} />}
 
         {/* CRM Client Table */}
         <Card className="border-0 shadow-sm overflow-hidden">
