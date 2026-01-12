@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { ClientFormData, ClientForm } from "@/components/ClientForm";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { 
@@ -31,6 +32,7 @@ const Admin = () => {
   const [clients, setClients] = useState<CRMClient[]>([]);
   const [loadingClients, setLoadingClients] = useState(true);
   const [isAddingClient, setIsAddingClient] = useState(false);
+  const [activeFilter, setActiveFilter] = useState<"attention" | "today" | "leads" | "health" | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -426,6 +428,31 @@ const Admin = () => {
     };
   }, [clients]);
 
+  // Filter clients based on active filter
+  const filteredClients = useMemo(() => {
+    if (!activeFilter) return clients;
+
+    switch (activeFilter) {
+      case "attention":
+        return clients.filter(c => getTemperature(c.last_interaction_at) === "cold");
+      case "today":
+        return clients.filter(c => c.next_step_date && differenceInDays(new Date(c.next_step_date), new Date()) === 0);
+      case "leads":
+        return clients.filter(c => {
+          const hours = differenceInHours(new Date(), new Date(c.created_at));
+          return hours <= 24;
+        });
+      case "health":
+        return clients.filter(c => getTemperature(c.last_interaction_at) === "hot");
+      default:
+        return clients;
+    }
+  }, [clients, activeFilter]);
+
+  const handleCardClick = (filter: "attention" | "today" | "leads" | "health") => {
+    setActiveFilter(prev => prev === filter ? null : filter);
+  };
+
   if (loading || loadingClients) {
     return <LoadingSkeleton />;
   }
@@ -474,29 +501,33 @@ const Admin = () => {
             title="Atenção Necessária"
             value={stats.needsAttention}
             icon={AlertTriangle}
-            description="Sem contato há +7 dias"
+            description={activeFilter === "attention" ? "Clique para limpar filtro" : "Sem contato há +7 dias"}
             variant="danger"
+            onClick={() => handleCardClick("attention")}
           />
           <EngagementStatsCard
             title="Tarefas Hoje"
             value={stats.todayTasks}
             icon={Calendar}
-            description="Próximos passos agendados"
+            description={activeFilter === "today" ? "Clique para limpar filtro" : "Próximos passos agendados"}
             variant="warning"
+            onClick={() => handleCardClick("today")}
           />
           <EngagementStatsCard
             title="Novos Leads"
             value={stats.newLeads}
             icon={Sparkles}
-            description="Últimas 24 horas"
+            description={activeFilter === "leads" ? "Clique para limpar filtro" : "Últimas 24 horas"}
             variant="info"
+            onClick={() => handleCardClick("leads")}
           />
           <EngagementStatsCard
             title="Health Score"
             value={`${stats.healthScore}%`}
             icon={Activity}
-            description="Clientes engajados"
+            description={activeFilter === "health" ? "Clique para limpar filtro" : "Clientes engajados"}
             variant={stats.healthScore >= 70 ? "success" : stats.healthScore >= 40 ? "warning" : "danger"}
+            onClick={() => handleCardClick("health")}
           />
         </div>
 
@@ -511,9 +542,27 @@ const Admin = () => {
           <CardHeader className="pb-4 bg-gradient-to-r from-card to-muted/10">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
-                <CardTitle className="text-xl">CRM de Clientes</CardTitle>
+                <CardTitle className="text-xl flex items-center gap-2">
+                  CRM de Clientes
+                  {activeFilter && (
+                    <Badge 
+                      variant="secondary" 
+                      className="cursor-pointer hover:bg-destructive/20"
+                      onClick={() => setActiveFilter(null)}
+                    >
+                      {activeFilter === "attention" && "Atenção Necessária"}
+                      {activeFilter === "today" && "Tarefas Hoje"}
+                      {activeFilter === "leads" && "Novos Leads"}
+                      {activeFilter === "health" && "Clientes Engajados"}
+                      <span className="ml-1">×</span>
+                    </Badge>
+                  )}
+                </CardTitle>
                 <CardDescription>
-                  Gerencie relacionamentos e acompanhe o engajamento dos clientes
+                  {activeFilter 
+                    ? `Exibindo ${filteredClients.length} de ${clients.length} clientes`
+                    : "Gerencie relacionamentos e acompanhe o engajamento dos clientes"
+                  }
                 </CardDescription>
               </div>
             </div>
@@ -523,7 +572,7 @@ const Admin = () => {
               <EmptyState onAddCandidate={() => setIsAddingClient(true)} />
             ) : (
               <CRMClientTable
-                clients={clients}
+                clients={filteredClients}
                 onEdit={handleEditClient}
                 onDelete={handleDeleteClient}
                 onBulkStatusChange={handleBulkStatusChange}
