@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
@@ -19,7 +19,13 @@ import {
   AlertCircle,
   Plus,
   Phone,
+  Briefcase,
+  GraduationCap,
+  FileCheck,
+  DollarSign,
 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { getServiceLabel } from "@/hooks/useClientServices";
 import { toast } from "sonner";
 import {
   Table,
@@ -122,6 +128,7 @@ export const CRMClientTable = ({
   onRefresh,
 }: CRMClientTableProps) => {
   const [editingClient, setEditingClient] = useState<CRMClient | null>(null);
+  const [editingServices, setEditingServices] = useState<Record<string, any>>({});
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [quickFilter, setQuickFilter] = useState<QuickFilterType>("all");
@@ -129,11 +136,46 @@ export const CRMClientTable = ({
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
   const [selectedClients, setSelectedClients] = useState<Set<string>>(new Set());
   const [viewingClient, setViewingClient] = useState<CRMClient | null>(null);
+  const [viewingServices, setViewingServices] = useState<any[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [folderClient, setFolderClient] = useState<CRMClient | null>(null);
   const [loggingClient, setLoggingClient] = useState<CRMClient | null>(null);
   const [emailClient, setEmailClient] = useState<CRMClient | null>(null);
   const itemsPerPage = 10;
+
+  // Fetch services for a client
+  const fetchClientServices = async (clientId: string) => {
+    const { data } = await supabase
+      .from("client_services")
+      .select("*")
+      .eq("client_id", clientId);
+    return data || [];
+  };
+
+  // Open edit dialog and load services
+  const openEditDialog = async (client: CRMClient) => {
+    setEditingClient(client);
+    const services = await fetchClientServices(client.id);
+    
+    // Convert services array to form format
+    const servicesMap: Record<string, boolean> = {};
+    const serviceDatesMap: Record<string, string> = {};
+    
+    services.forEach((s) => {
+      servicesMap[s.service_type] = true;
+      if (s.scheduled_date) serviceDatesMap[`${s.service_type}_scheduled`] = s.scheduled_date;
+      if (s.delivered_date) serviceDatesMap[`${s.service_type}_delivered`] = s.delivered_date;
+    });
+    
+    setEditingServices({ services: servicesMap, service_dates: serviceDatesMap });
+  };
+
+  // Open view drawer and load services
+  const openViewDrawer = async (client: CRMClient) => {
+    setViewingClient(client);
+    const services = await fetchClientServices(client.id);
+    setViewingServices(services);
+  };
 
   const isIncomplete = (client: CRMClient) => {
     return !client.cpf || !client.phone || !client.resume_url;
@@ -464,7 +506,7 @@ export const CRMClientTable = ({
                           <div className="min-w-0 space-y-1">
                             <div className="flex items-center gap-2">
                               <button
-                                onClick={() => setViewingClient(client)}
+                                onClick={() => openViewDrawer(client)}
                                 className="font-medium hover:text-primary transition-colors truncate"
                               >
                                 {client.full_name}
@@ -542,7 +584,7 @@ export const CRMClientTable = ({
                                 variant="ghost"
                                 size="icon"
                                 className="h-8 w-8 hover:bg-primary/10"
-                                onClick={() => setViewingClient(client)}
+                                onClick={() => openViewDrawer(client)}
                               >
                                 <Eye className="h-4 w-4 text-primary" />
                               </Button>
@@ -586,7 +628,7 @@ export const CRMClientTable = ({
                                 variant="ghost"
                                 size="icon"
                                 className="h-8 w-8 hover:bg-muted"
-                                onClick={() => setEditingClient(client)}
+                                onClick={() => openEditDialog(client)}
                               >
                                 <Pencil className="h-4 w-4" />
                               </Button>
@@ -641,7 +683,7 @@ export const CRMClientTable = ({
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <button
-                          onClick={() => setViewingClient(client)}
+                          onClick={() => openViewDrawer(client)}
                           className="font-semibold text-base hover:text-primary block truncate"
                         >
                           {client.full_name}
@@ -701,11 +743,11 @@ export const CRMClientTable = ({
                   </div>
 
                   <div className="flex gap-1 pl-10">
-                    <Button variant="ghost" size="sm" onClick={() => setViewingClient(client)}>
+                    <Button variant="ghost" size="sm" onClick={() => openViewDrawer(client)}>
                       <Eye className="h-4 w-4 mr-1" />
                       Ver
                     </Button>
-                    <Button variant="ghost" size="sm" onClick={() => setEditingClient(client)}>
+                    <Button variant="ghost" size="sm" onClick={() => openEditDialog(client)}>
                       <Pencil className="h-4 w-4 mr-1" />
                       Editar
                     </Button>
@@ -794,69 +836,91 @@ export const CRMClientTable = ({
                 <TemperatureBadge lastInteractionAt={viewingClient.last_interaction_at} />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Telefone</p>
-                  <p className="text-base">{viewingClient.phone || "Não informado"}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Última Interação</p>
-                  <p className="text-base">{getRelativeTime(viewingClient.last_interaction_at)}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Próximo Passo</p>
-                  <p className="text-base">{viewingClient.next_step || "Não definido"}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Área</p>
-                  <p className="text-base">{viewingClient.area_of_interest || "Não informado"}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Região</p>
-                  <p className="text-base">{viewingClient.region || "Não informado"}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">LinkedIn</p>
-                  {viewingClient.linkedin_url ? (
-                    <a href={viewingClient.linkedin_url} target="_blank" rel="noopener noreferrer" className="text-base text-primary hover:underline flex items-center gap-1">
-                      Ver Perfil <ExternalLink className="h-3 w-3" />
-                    </a>
-                  ) : (
-                    <p className="text-base">Não informado</p>
+              {/* Dados Pessoais */}
+              <div className="space-y-3">
+                <h4 className="font-medium text-sm text-muted-foreground flex items-center gap-2">
+                  <Phone className="h-4 w-4" /> Dados de Contato
+                </h4>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div><span className="text-muted-foreground">Telefone:</span> {viewingClient.phone || "—"}</div>
+                  <div><span className="text-muted-foreground">CPF:</span> {viewingClient.cpf || "—"}</div>
+                  <div><span className="text-muted-foreground">RG:</span> {viewingClient.rg || "—"}</div>
+                  <div><span className="text-muted-foreground">Região:</span> {viewingClient.region || "—"}</div>
+                  <div className="col-span-2"><span className="text-muted-foreground">Endereço:</span> {viewingClient.address || "—"}</div>
+                  <div><span className="text-muted-foreground">Formação:</span> {viewingClient.education || "—"}</div>
+                  <div><span className="text-muted-foreground">Área:</span> {viewingClient.area_of_interest || "—"}</div>
+                  {viewingClient.linkedin_url && (
+                    <div className="col-span-2">
+                      <a href={viewingClient.linkedin_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1">
+                        Ver LinkedIn <ExternalLink className="h-3 w-3" />
+                      </a>
+                    </div>
                   )}
                 </div>
               </div>
 
-              {/* Document Actions */}
+              {/* Dados do Contrato */}
+              {(viewingClient.contract_number || viewingClient.contract_value) && (
+                <div className="space-y-3 pt-3 border-t">
+                  <h4 className="font-medium text-sm text-muted-foreground flex items-center gap-2">
+                    <DollarSign className="h-4 w-4" /> Contrato
+                  </h4>
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div><span className="text-muted-foreground">Nº Contrato:</span> {viewingClient.contract_number || "—"}</div>
+                    <div><span className="text-muted-foreground">Valor:</span> {viewingClient.contract_value ? `R$ ${viewingClient.contract_value.toLocaleString("pt-BR")}` : "—"}</div>
+                    <div><span className="text-muted-foreground">Início:</span> {viewingClient.contract_start_date ? format(new Date(viewingClient.contract_start_date), "dd/MM/yyyy") : "—"}</div>
+                    <div><span className="text-muted-foreground">Fim:</span> {viewingClient.contract_end_date ? format(new Date(viewingClient.contract_end_date), "dd/MM/yyyy") : "—"}</div>
+                    <div><span className="text-muted-foreground">Pagamento:</span> {viewingClient.payment_method || "—"}</div>
+                    <div><span className="text-muted-foreground">Parcelas:</span> {viewingClient.installments_count || "—"}</div>
+                  </div>
+                </div>
+              )}
+
+              {/* Serviços Contratados */}
+              {viewingServices.length > 0 && (
+                <div className="space-y-3 pt-3 border-t">
+                  <h4 className="font-medium text-sm text-muted-foreground flex items-center gap-2">
+                    <Briefcase className="h-4 w-4" /> Serviços Contratados
+                  </h4>
+                  <div className="flex flex-wrap gap-2">
+                    {viewingServices.map((s) => (
+                      <Badge key={s.id} variant={s.delivered_date ? "default" : "secondary"} className="text-xs">
+                        {s.delivered_date ? <FileCheck className="h-3 w-3 mr-1" /> : null}
+                        {getServiceLabel(s.service_type)}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Observações */}
+              {viewingClient.notes && (
+                <div className="space-y-2 pt-3 border-t">
+                  <h4 className="font-medium text-sm text-muted-foreground">Observações</h4>
+                  <p className="text-sm bg-muted/50 p-3 rounded-lg">{viewingClient.notes}</p>
+                </div>
+              )}
+
+              {/* Actions */}
               <div className="flex gap-2 pt-4 border-t">
-                <Button 
-                  variant="outline" 
-                  className="flex-1"
-                  onClick={() => {
-                    setViewingClient(null);
-                    setFolderClient(viewingClient);
-                  }}
-                >
+                <Button variant="outline" className="flex-1" onClick={() => { setViewingClient(null); setFolderClient(viewingClient); }}>
                   <FolderOpen className="h-4 w-4 mr-2" />
-                  Ver Documentos
+                  Documentos
                 </Button>
                 {viewingClient.resume_url && (
-                  <Button 
-                    variant="outline" 
-                    onClick={() => window.open(viewingClient.resume_url!, "_blank", "noopener,noreferrer")}
-                  >
+                  <Button variant="outline" onClick={() => window.open(viewingClient.resume_url!, "_blank", "noopener,noreferrer")}>
                     <FileText className="h-4 w-4 mr-2" />
-                    Ver Currículo
+                    Currículo
                   </Button>
                 )}
               </div>
 
-              <div className="flex gap-2 pt-2">
+              <div className="flex gap-2">
                 <Button className="flex-1" onClick={() => setLoggingClient(viewingClient)}>
                   <Plus className="h-4 w-4 mr-2" />
                   Registrar Interação
                 </Button>
-                <Button variant="outline" onClick={() => setEditingClient(viewingClient)}>
+                <Button variant="outline" onClick={() => openEditDialog(viewingClient)}>
                   <Pencil className="h-4 w-4 mr-2" />
                   Editar
                 </Button>
