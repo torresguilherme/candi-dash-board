@@ -22,63 +22,38 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     let mounted = true;
-    let initialLoadDone = false;
 
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (!mounted) return;
-        
-        console.log("Auth state change:", event, session?.user?.email);
-        
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          const adminStatus = await checkAdminStatus(session.user.id);
-          if (mounted) {
-            setIsAdmin(adminStatus);
-          }
-        } else {
-          setIsAdmin(false);
-        }
-        
-        // Only set loading false from listener after initial load is done
-        if (initialLoadDone && mounted) {
-          setLoading(false);
-        }
-      }
-    );
+    const syncAuthState = async (session: Session | null) => {
+      if (!mounted) return;
 
-    // Check for existing session
-    const initSession = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (!mounted) return;
-        
-        console.log("Initial session:", session?.user?.email);
-        
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          const adminStatus = await checkAdminStatus(session.user.id);
-          if (mounted) {
-            setIsAdmin(adminStatus);
-          }
-        }
-      } catch (error) {
-        console.error("Error getting session:", error);
-      } finally {
-        initialLoadDone = true;
-        if (mounted) {
-          setLoading(false);
-        }
+      setLoading(true);
+      setSession(session);
+      setUser(session?.user ?? null);
+
+      if (session?.user) {
+        const adminStatus = await checkAdminStatus(session.user.id);
+        if (mounted) setIsAdmin(adminStatus);
+      } else {
+        setIsAdmin(false);
       }
+
+      if (mounted) setLoading(false);
     };
-    
-    initSession();
+
+    // Listener first (prevents missing SIGNED_IN events)
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      await syncAuthState(session);
+    });
+
+    // Initial session load
+    supabase.auth
+      .getSession()
+      .then(({ data: { session } }) => syncAuthState(session))
+      .catch(() => {
+        if (mounted) setLoading(false);
+      });
 
     return () => {
       mounted = false;
@@ -88,22 +63,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const checkAdminStatus = async (userId: string): Promise<boolean> => {
     try {
-      console.log("Checking admin status for:", userId);
       const { data, error } = await supabase
         .from('user_roles')
         .select('role')
         .eq('user_id', userId)
         .eq('role', 'admin')
         .maybeSingle();
-      
-      console.log("Admin check result:", data, error);
-      
-      if (!error && data) {
-        return true;
-      }
-      return false;
-    } catch (error) {
-      console.error("Error checking admin status:", error);
+
+      if (error) return false;
+      return Boolean(data);
+    } catch {
       return false;
     }
   };
