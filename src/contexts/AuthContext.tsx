@@ -23,7 +23,30 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     let mounted = true;
 
-    // Check for existing session first
+    // Set up auth state listener FIRST (before getSession)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (!mounted) return;
+        
+        setSession(session);
+        setUser(session?.user ?? null);
+        
+        if (session?.user) {
+          // Use setTimeout to avoid Supabase client deadlock
+          setTimeout(async () => {
+            if (mounted) {
+              await checkAdminStatus(session.user.id);
+              setLoading(false);
+            }
+          }, 0);
+        } else {
+          setIsAdmin(false);
+          setLoading(false);
+        }
+      }
+    );
+
+    // Check for existing session
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!mounted) return;
       
@@ -38,22 +61,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setLoading(false);
       }
     });
-
-    // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (!mounted) return;
-        
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          await checkAdminStatus(session.user.id);
-        } else {
-          setIsAdmin(false);
-        }
-      }
-    );
 
     return () => {
       mounted = false;
