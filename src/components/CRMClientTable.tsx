@@ -23,6 +23,7 @@ import {
   GraduationCap,
   FileCheck,
   DollarSign,
+  Loader2,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getServiceLabel } from "@/hooks/useClientServices";
@@ -129,6 +130,7 @@ export const CRMClientTable = ({
 }: CRMClientTableProps) => {
   const [editingClient, setEditingClient] = useState<CRMClient | null>(null);
   const [editingServices, setEditingServices] = useState<Record<string, any>>({});
+  const [loadingServices, setLoadingServices] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [quickFilter, setQuickFilter] = useState<QuickFilterType>("all");
@@ -137,6 +139,7 @@ export const CRMClientTable = ({
   const [selectedClients, setSelectedClients] = useState<Set<string>>(new Set());
   const [viewingClient, setViewingClient] = useState<CRMClient | null>(null);
   const [viewingServices, setViewingServices] = useState<any[]>([]);
+  const [loadingViewServices, setLoadingViewServices] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [folderClient, setFolderClient] = useState<CRMClient | null>(null);
   const [loggingClient, setLoggingClient] = useState<CRMClient | null>(null);
@@ -155,26 +158,40 @@ export const CRMClientTable = ({
   // Open edit dialog and load services
   const openEditDialog = async (client: CRMClient) => {
     setEditingClient(client);
-    const services = await fetchClientServices(client.id);
+    setEditingServices({});
+    setLoadingServices(true);
     
-    // Convert services array to form format
-    const servicesMap: Record<string, boolean> = {};
-    const serviceDatesMap: Record<string, string> = {};
-    
-    services.forEach((s) => {
-      servicesMap[s.service_type] = true;
-      if (s.scheduled_date) serviceDatesMap[`${s.service_type}_scheduled`] = s.scheduled_date;
-      if (s.delivered_date) serviceDatesMap[`${s.service_type}_delivered`] = s.delivered_date;
-    });
-    
-    setEditingServices({ services: servicesMap, service_dates: serviceDatesMap });
+    try {
+      const services = await fetchClientServices(client.id);
+      
+      // Convert services array to form format
+      const servicesMap: Record<string, boolean> = {};
+      const serviceDatesMap: Record<string, string> = {};
+      
+      services.forEach((s) => {
+        servicesMap[s.service_type] = true;
+        if (s.scheduled_date) serviceDatesMap[`${s.service_type}_scheduled`] = s.scheduled_date;
+        if (s.delivered_date) serviceDatesMap[`${s.service_type}_delivered`] = s.delivered_date;
+      });
+      
+      setEditingServices({ services: servicesMap, service_dates: serviceDatesMap });
+    } finally {
+      setLoadingServices(false);
+    }
   };
 
   // Open view drawer and load services
   const openViewDrawer = async (client: CRMClient) => {
     setViewingClient(client);
-    const services = await fetchClientServices(client.id);
-    setViewingServices(services);
+    setViewingServices([]);
+    setLoadingViewServices(true);
+    
+    try {
+      const services = await fetchClientServices(client.id);
+      setViewingServices(services);
+    } finally {
+      setLoadingViewServices(false);
+    }
   };
 
   const isIncomplete = (client: CRMClient) => {
@@ -877,11 +894,16 @@ export const CRMClientTable = ({
               )}
 
               {/* Serviços Contratados */}
-              {viewingServices.length > 0 && (
-                <div className="space-y-3 pt-3 border-t">
-                  <h4 className="font-medium text-sm text-muted-foreground flex items-center gap-2">
-                    <Briefcase className="h-4 w-4" /> Serviços Contratados
-                  </h4>
+              <div className="space-y-3 pt-3 border-t">
+                <h4 className="font-medium text-sm text-muted-foreground flex items-center gap-2">
+                  <Briefcase className="h-4 w-4" /> Serviços Contratados
+                </h4>
+                {loadingViewServices ? (
+                  <div className="flex items-center justify-center py-4">
+                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                    <span className="ml-2 text-sm text-muted-foreground">Carregando serviços...</span>
+                  </div>
+                ) : viewingServices.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
                     {viewingServices.map((s) => (
                       <Badge key={s.id} variant={s.delivered_date ? "default" : "secondary"} className="text-xs">
@@ -890,8 +912,10 @@ export const CRMClientTable = ({
                       </Badge>
                     ))}
                   </div>
-                </div>
-              )}
+                ) : (
+                  <p className="text-sm text-muted-foreground">Nenhum serviço contratado</p>
+                )}
+              </div>
 
               {/* Observações */}
               {viewingClient.notes && (
@@ -937,7 +961,12 @@ export const CRMClientTable = ({
             <DialogTitle>Editar Cliente</DialogTitle>
           </DialogHeader>
           <div className="flex-1 overflow-y-auto p-6 pt-4">
-            {editingClient && (
+            {editingClient && loadingServices ? (
+              <div className="flex flex-col items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <p className="mt-3 text-sm text-muted-foreground">Carregando dados do cliente...</p>
+              </div>
+            ) : editingClient ? (
               <ClientForm
                 onSubmit={handleEdit}
                 defaultValues={{
@@ -981,7 +1010,7 @@ export const CRMClientTable = ({
                 existingPhotoUrl={editingClient.photo_url}
                 currentEmail={editingClient.email}
               />
-            )}
+            ) : null}
           </div>
         </DialogContent>
       </Dialog>
