@@ -111,9 +111,11 @@ const Admin = () => {
 
   const saveClientServices = async (clientId: string, data: ClientFormData) => {
     const services = data.services || {};
+    const courses = data.courses || {};
     const serviceDates = data.service_dates || {};
 
-    const serviceTypes = [
+    // All service types including courses
+    const allServiceTypes = [
       "career_mentoring",
       "market_mapping",
       "support_material",
@@ -124,10 +126,19 @@ const Admin = () => {
       "company_referral",
       "linkedin_service",
       "personal_marketing",
+      // Courses
+      "cnv",
+      "persona_in_foco",
+      "pnl_practitioner",
     ] as const;
 
-    for (const serviceType of serviceTypes) {
-      const isActive = services[serviceType];
+    for (const serviceType of allServiceTypes) {
+      // Check if it's a course or a regular service
+      const isCourse = ["cnv", "persona_in_foco", "pnl_practitioner"].includes(serviceType);
+      const isActive = isCourse 
+        ? courses[serviceType as keyof typeof courses] 
+        : services[serviceType as keyof typeof services];
+      
       const scheduledKey = `${serviceType}_scheduled` as keyof typeof serviceDates;
       const deliveredKey = `${serviceType}_delivered` as keyof typeof serviceDates;
 

@@ -162,19 +162,27 @@ export const CRMClientTable = ({
     setLoadingServices(true);
     
     try {
-      const services = await fetchClientServices(client.id);
+      const servicesData = await fetchClientServices(client.id);
       
-      // Convert services array to form format
+      // Course service types
+      const courseTypes = ["cnv", "persona_in_foco", "pnl_practitioner"];
+      
+      // Convert services array to form format (separate services and courses)
       const servicesMap: Record<string, boolean> = {};
+      const coursesMap: Record<string, boolean> = {};
       const serviceDatesMap: Record<string, string> = {};
       
-      services.forEach((s) => {
-        servicesMap[s.service_type] = true;
+      servicesData.forEach((s) => {
+        if (courseTypes.includes(s.service_type)) {
+          coursesMap[s.service_type] = true;
+        } else {
+          servicesMap[s.service_type] = true;
+        }
         if (s.scheduled_date) serviceDatesMap[`${s.service_type}_scheduled`] = s.scheduled_date;
         if (s.delivered_date) serviceDatesMap[`${s.service_type}_delivered`] = s.delivered_date;
       });
       
-      setEditingServices({ services: servicesMap, service_dates: serviceDatesMap });
+      setEditingServices({ services: servicesMap, courses: coursesMap, service_dates: serviceDatesMap });
     } finally {
       setLoadingServices(false);
     }
@@ -1001,9 +1009,9 @@ export const CRMClientTable = ({
                     personal_marketing: editingServices.services?.personal_marketing || false,
                   },
                   courses: {
-                    cnv: editingServices.services?.cnv || false,
-                    persona_in_foco: editingServices.services?.persona_in_foco || false,
-                    pnl_practitioner: editingServices.services?.pnl_practitioner || false,
+                    cnv: editingServices.courses?.cnv || false,
+                    persona_in_foco: editingServices.courses?.persona_in_foco || false,
+                    pnl_practitioner: editingServices.courses?.pnl_practitioner || false,
                   },
                   service_dates: editingServices.service_dates || {},
                 }}
