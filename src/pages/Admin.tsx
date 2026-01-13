@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { ClientFormData, ClientForm } from "@/components/ClientForm";
@@ -34,24 +34,8 @@ const Admin = () => {
   const [loadingClients, setLoadingClients] = useState(true);
   const [isAddingClient, setIsAddingClient] = useState(false);
   const [activeFilter, setActiveFilter] = useState<"attention" | "today" | "leads" | "health" | null>(null);
-  const navigate = useNavigate();
   const { toast } = useToast();
   const { log } = useAuditLog();
-
-  useEffect(() => {
-    if (!loading) {
-      if (!user) {
-        navigate("/");
-      } else if (!isAdmin) {
-        navigate("/cadastro");
-        toast({
-          title: "Acesso negado",
-          description: "Você não tem permissão para acessar esta área",
-          variant: "destructive",
-        });
-      }
-    }
-  }, [user, isAdmin, loading, navigate]);
 
   useEffect(() => {
     if (user && isAdmin) {
@@ -521,12 +505,39 @@ const Admin = () => {
     setActiveFilter(prev => prev === filter ? null : filter);
   };
 
-  if (loading || loadingClients) {
+  if (loading) {
     return <LoadingSkeleton />;
   }
 
-  if (!user || !isAdmin) {
-    return null;
+  if (!user) {
+    return <Navigate to="/" replace />;
+  }
+
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen bg-muted/30 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle>Acesso negado</CardTitle>
+            <CardDescription>
+              Seu usuário está logado, mas não tem permissão para acessar o painel administrativo.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex gap-2">
+            <Button variant="outline" className="flex-1" onClick={signOut}>
+              Sair
+            </Button>
+            <Button className="flex-1" onClick={() => window.location.reload()}>
+              Recarregar
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (loadingClients) {
+    return <LoadingSkeleton />;
   }
 
   return (
