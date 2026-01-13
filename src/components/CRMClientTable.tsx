@@ -959,6 +959,24 @@ export const CRMClientTable = ({
                   installments_count: editingClient.installments_count ? String(editingClient.installments_count) : "",
                   installments_due_date: editingClient.installments_due_date || "",
                   notes: editingClient.notes || "",
+                  services: {
+                    career_mentoring: editingServices.services?.career_mentoring || false,
+                    market_mapping: editingServices.services?.market_mapping || false,
+                    support_material: editingServices.services?.support_material || false,
+                    interview_pitch: editingServices.services?.interview_pitch || false,
+                    resume_restructuring: editingServices.services?.resume_restructuring || false,
+                    behavioral_assessment: editingServices.services?.behavioral_assessment || false,
+                    brain_preference: editingServices.services?.brain_preference || false,
+                    company_referral: editingServices.services?.company_referral || false,
+                    linkedin_service: editingServices.services?.linkedin_service || false,
+                    personal_marketing: editingServices.services?.personal_marketing || false,
+                  },
+                  courses: {
+                    cnv: editingServices.services?.cnv || false,
+                    persona_in_foco: editingServices.services?.persona_in_foco || false,
+                    pnl_practitioner: editingServices.services?.pnl_practitioner || false,
+                  },
+                  service_dates: editingServices.service_dates || {},
                 }}
                 existingPhotoUrl={editingClient.photo_url}
                 currentEmail={editingClient.email}
