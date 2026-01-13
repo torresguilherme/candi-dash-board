@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { LogOut, Menu } from "lucide-react";
+import { LogOut, Menu, FileText } from "lucide-react";
 import logoWhite from "@/assets/logo-white.png";
+import { AuditLogsDialog } from "./AuditLogsDialog";
 
 interface AdminHeaderProps {
   onSignOut: () => void;
@@ -8,34 +10,49 @@ interface AdminHeaderProps {
 }
 
 export const AdminHeader = ({ onSignOut, onToggleSidebar }: AdminHeaderProps) => {
+  const [showLogs, setShowLogs] = useState(false);
+
   return (
-    <header className="sticky top-0 z-50 border-b bg-primary text-primary-foreground">
-      <div className="container mx-auto px-4 py-4">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            {onToggleSidebar && (
-              <Button variant="ghost" size="icon" onClick={onToggleSidebar} className="lg:hidden">
-                <Menu className="h-5 w-5" />
+    <>
+      <header className="sticky top-0 z-50 border-b bg-primary text-primary-foreground">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              {onToggleSidebar && (
+                <Button variant="ghost" size="icon" onClick={onToggleSidebar} className="lg:hidden">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              )}
+              <div className="flex items-center gap-3">
+                <img src={logoWhite} alt="Person Corp" className="h-8 object-contain" />
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => setShowLogs(true)}
+                className="text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10"
+              >
+                <FileText className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Logs</span>
               </Button>
-            )}
-            <div className="flex items-center gap-3">
-              <img src={logoWhite} alt="Person Corp" className="h-8 object-contain" />
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={onSignOut}
+                className="text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10"
+              >
+                <LogOut className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Sair</span>
+              </Button>
             </div>
           </div>
-          
-          <div className="flex items-center gap-2">
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={onSignOut}
-              className="text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10"
-            >
-              <LogOut className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Sair</span>
-            </Button>
-          </div>
         </div>
-      </div>
-    </header>
+      </header>
+
+      <AuditLogsDialog open={showLogs} onOpenChange={setShowLogs} />
+    </>
   );
 };

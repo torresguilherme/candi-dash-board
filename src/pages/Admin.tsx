@@ -26,6 +26,7 @@ import { getTemperature } from "@/components/admin/TemperatureBadge";
 import { ServiceAlertsCard } from "@/components/admin/ServiceAlertsCard";
 import { differenceInDays, differenceInHours } from "date-fns";
 import { getUserFriendlyError } from "@/lib/error-utils";
+import { useAuditLog } from "@/hooks/useAuditLog";
 
 const Admin = () => {
   const { user, isAdmin, loading, signOut } = useAuth();
@@ -35,6 +36,7 @@ const Admin = () => {
   const [activeFilter, setActiveFilter] = useState<"attention" | "today" | "leads" | "health" | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { log } = useAuditLog();
 
   useEffect(() => {
     if (!loading) {
@@ -258,6 +260,15 @@ const Admin = () => {
       // Save services with dates (and propagate any errors)
       await saveClientServices(id, data);
 
+      // Log the action
+      await log({
+        action: "update",
+        entityType: "client",
+        entityId: id,
+        entityName: data.full_name,
+        details: { email: data.email },
+      });
+
       toast({ title: "Cliente atualizado com sucesso!" });
       await fetchClients();
     } catch (error: unknown) {
@@ -274,6 +285,9 @@ const Admin = () => {
   const handleDeleteClient = async (id: string) => {
     if (!user || !isAdmin) return;
 
+    // Get client name before deleting
+    const clientToDelete = clients.find(c => c.id === id);
+
     try {
       const { error } = await supabase
         .from('clients')
@@ -281,6 +295,14 @@ const Admin = () => {
         .eq('id', id);
 
       if (error) throw error;
+
+      // Log the action
+      await log({
+        action: "delete",
+        entityType: "client",
+        entityId: id,
+        entityName: clientToDelete?.full_name || "Cliente desconhecido",
+      });
 
       toast({
         title: "Cliente excluído com sucesso!",
@@ -357,6 +379,15 @@ const Admin = () => {
       // Save services with dates
       await saveClientServices(clientId, data);
 
+      // Log the action
+      await log({
+        action: "create",
+        entityType: "client",
+        entityId: clientId,
+        entityName: data.full_name,
+        details: { email: data.email },
+      });
+
       toast({ title: "Cliente adicionado com sucesso!" });
       setIsAddingClient(false);
       await fetchClients();
@@ -382,6 +413,18 @@ const Admin = () => {
 
       if (error) throw error;
 
+      // Log bulk status change
+      for (const id of ids) {
+        const client = clients.find(c => c.id === id);
+        await log({
+          action: "update",
+          entityType: "client",
+          entityId: id,
+          entityName: client?.full_name || "Cliente",
+          details: { status: newStatus, bulkAction: true },
+        });
+      }
+
       fetchClients();
       toast({
         title: "Status atualizado com sucesso!",
@@ -399,6 +442,9 @@ const Admin = () => {
   const handleBulkDelete = async (ids: string[]) => {
     if (!user || !isAdmin) return;
 
+    // Get client names before deleting
+    const clientsToDelete = clients.filter(c => ids.includes(c.id));
+
     try {
       const { error } = await supabase
         .from('clients')
@@ -406,6 +452,17 @@ const Admin = () => {
         .in('id', ids);
 
       if (error) throw error;
+
+      // Log bulk delete
+      for (const client of clientsToDelete) {
+        await log({
+          action: "delete",
+          entityType: "client",
+          entityId: client.id,
+          entityName: client.full_name,
+          details: { bulkAction: true },
+        });
+      }
 
       fetchClients();
       toast({
