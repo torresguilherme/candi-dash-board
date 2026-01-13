@@ -23,28 +23,34 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     let mounted = true;
 
-    const syncAuthState = async (session: Session | null) => {
+    const syncAuthState = (session: Session | null) => {
       if (!mounted) return;
 
       setLoading(true);
       setSession(session);
       setUser(session?.user ?? null);
 
+      // Important: do NOT block auth events (SIGNED_IN) with awaited DB calls.
       if (session?.user) {
-        const adminStatus = await checkAdminStatus(session.user.id);
-        if (mounted) setIsAdmin(adminStatus);
+        setIsAdmin(false);
+        void checkAdminStatus(session.user.id)
+          .then((isAdmin) => {
+            if (mounted) setIsAdmin(isAdmin);
+          })
+          .finally(() => {
+            if (mounted) setLoading(false);
+          });
       } else {
         setIsAdmin(false);
+        setLoading(false);
       }
-
-      if (mounted) setLoading(false);
     };
 
     // Listener first (prevents missing SIGNED_IN events)
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      await syncAuthState(session);
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      syncAuthState(session);
     });
 
     // Initial session load
