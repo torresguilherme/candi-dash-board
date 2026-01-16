@@ -490,6 +490,7 @@ export const CRMClientTable = ({
                       <ArrowUpDown className="h-3.5 w-3.5" />
                     </button>
                   </TableHead>
+                  <TableHead className="min-w-[120px]">Início Contrato</TableHead>
                   <TableHead className="min-w-[160px]">Próximo Passo</TableHead>
                   <TableHead className="text-center">Ações Rápidas</TableHead>
                 </TableRow>
@@ -548,6 +549,13 @@ export const CRMClientTable = ({
                       </TableCell>
                       <TableCell className="py-4">
                         <p className="text-sm font-medium">{getRelativeTime(client.last_interaction_at)}</p>
+                      </TableCell>
+                      <TableCell className="py-4">
+                        {client.contract_start_date ? (
+                          <span className="text-sm">{format(new Date(client.contract_start_date), "dd/MM/yyyy")}</span>
+                        ) : (
+                          <span className="text-xs text-muted-foreground italic">—</span>
+                        )}
                       </TableCell>
                       <TableCell className="py-4">
                         {client.next_step ? (
@@ -885,21 +893,28 @@ export const CRMClientTable = ({
               </div>
 
               {/* Dados do Contrato */}
-              {(viewingClient.contract_number || viewingClient.contract_value) && (
-                <div className="space-y-3 pt-3 border-t">
-                  <h4 className="font-medium text-sm text-muted-foreground flex items-center gap-2">
-                    <DollarSign className="h-4 w-4" /> Contrato
-                  </h4>
-                  <div className="grid grid-cols-2 gap-3 text-sm">
-                    <div><span className="text-muted-foreground">Nº Contrato:</span> {viewingClient.contract_number || "—"}</div>
-                    <div><span className="text-muted-foreground">Valor:</span> {viewingClient.contract_value ? `R$ ${viewingClient.contract_value.toLocaleString("pt-BR")}` : "—"}</div>
-                    <div><span className="text-muted-foreground">Início:</span> {viewingClient.contract_start_date ? format(new Date(viewingClient.contract_start_date), "dd/MM/yyyy") : "—"}</div>
-                    <div><span className="text-muted-foreground">Fim:</span> {viewingClient.contract_end_date ? format(new Date(viewingClient.contract_end_date), "dd/MM/yyyy") : "—"}</div>
-                    <div><span className="text-muted-foreground">Pagamento:</span> {viewingClient.payment_method || "—"}</div>
-                    <div><span className="text-muted-foreground">Parcelas:</span> {viewingClient.installments_count || "—"}</div>
-                  </div>
+              <div className="space-y-3 pt-3 border-t">
+                <h4 className="font-medium text-sm text-muted-foreground flex items-center gap-2">
+                  <DollarSign className="h-4 w-4" /> Dados do Contrato
+                </h4>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div><span className="text-muted-foreground">Nº Contrato:</span> {viewingClient.contract_number || "—"}</div>
+                  <div><span className="text-muted-foreground">Valor:</span> {viewingClient.contract_value ? `R$ ${viewingClient.contract_value.toLocaleString("pt-BR")}` : "—"}</div>
+                  <div><span className="text-muted-foreground">Início:</span> {viewingClient.contract_start_date ? format(new Date(viewingClient.contract_start_date), "dd/MM/yyyy") : "—"}</div>
+                  <div><span className="text-muted-foreground">Fim:</span> {viewingClient.contract_end_date ? format(new Date(viewingClient.contract_end_date), "dd/MM/yyyy") : "—"}</div>
+                  <div><span className="text-muted-foreground">Pagamento:</span> {viewingClient.payment_method || "—"}</div>
+                  <div><span className="text-muted-foreground">Parcelas:</span> {viewingClient.installments_count || "—"}</div>
                 </div>
-              )}
+              </div>
+
+              {/* Última Atualização */}
+              <div className="space-y-2 pt-3 border-t">
+                <h4 className="font-medium text-sm text-muted-foreground">Informações do Sistema</h4>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div><span className="text-muted-foreground">Cadastrado em:</span> {format(new Date(viewingClient.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</div>
+                  <div><span className="text-muted-foreground">Última interação:</span> {viewingClient.last_interaction_at ? format(new Date(viewingClient.last_interaction_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR }) : "—"}</div>
+                </div>
+              </div>
 
               {/* Serviços Contratados */}
               <div className="space-y-3 pt-3 border-t">
