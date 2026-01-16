@@ -13,7 +13,7 @@ import {
   FormDescription,
 } from "@/components/ui/form";
 import { useFormPersistence } from "@/hooks/useFormPersistence";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Loader2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -248,6 +248,7 @@ export const ClientForm = ({
 }: ClientFormProps) => {
   const [photoPreview, setPhotoPreview] = useState<string | null>(existingPhotoUrl || null);
   const [showDraftAlert, setShowDraftAlert] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
   
   // Use persistence for new clients only (not when editing)
@@ -371,6 +372,7 @@ export const ClientForm = ({
       return;
     }
 
+    setIsSaving(true);
     try {
       await onSubmit(data);
       
@@ -386,12 +388,22 @@ export const ClientForm = ({
     } catch (error) {
       // The caller already shows a detailed error toast.
       console.error("ClientForm submit error:", error);
+    } finally {
+      setIsSaving(false);
     }
   };
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6 relative">
+        {/* Loading Overlay */}
+        {isSaving && (
+          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center rounded-lg">
+            <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+            <p className="text-lg font-medium text-foreground">Salvando informações...</p>
+            <p className="text-sm text-muted-foreground mt-1">Por favor, aguarde</p>
+          </div>
+        )}
         {/* Draft Recovery Alert */}
         {showDraftAlert && (
           <Alert className="border-amber-200 bg-amber-50 dark:bg-amber-950/20">
@@ -1272,8 +1284,15 @@ export const ClientForm = ({
           )}
         />
 
-        <Button type="submit" className="w-full" size="lg">
-          {submitButtonText}
+        <Button type="submit" className="w-full" size="lg" disabled={isSaving}>
+          {isSaving ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Salvando...
+            </>
+          ) : (
+            submitButtonText
+          )}
         </Button>
       </form>
     </Form>
