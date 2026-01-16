@@ -463,7 +463,7 @@ export const CRMClientTable = ({
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/30 hover:bg-muted/30">
-                  <TableHead className="w-12 h-12">
+                  <TableHead className="w-10 px-3">
                     <Checkbox
                       checked={
                         paginatedClients.length > 0 && paginatedClients.every((c) => selectedClients.has(c.id))
@@ -471,8 +471,8 @@ export const CRMClientTable = ({
                       onCheckedChange={handleSelectAll}
                     />
                   </TableHead>
-                  <TableHead className="w-24">Saúde</TableHead>
-                  <TableHead className="min-w-[220px]">
+                  <TableHead className="w-20 px-2 text-center">Saúde</TableHead>
+                  <TableHead className="w-[240px] px-3">
                     <button
                       onClick={() => handleSort("full_name")}
                       className="flex items-center gap-1 font-semibold hover:text-foreground"
@@ -481,7 +481,7 @@ export const CRMClientTable = ({
                       <ArrowUpDown className="h-3.5 w-3.5" />
                     </button>
                   </TableHead>
-                  <TableHead className="min-w-[140px]">
+                  <TableHead className="w-[130px] px-3">
                     <button
                       onClick={() => handleSort("last_interaction_at")}
                       className="flex items-center gap-1 font-semibold hover:text-foreground"
@@ -490,9 +490,9 @@ export const CRMClientTable = ({
                       <ArrowUpDown className="h-3.5 w-3.5" />
                     </button>
                   </TableHead>
-                  <TableHead className="min-w-[120px]">Início Contrato</TableHead>
-                  <TableHead className="min-w-[160px]">Próximo Passo</TableHead>
-                  <TableHead className="text-center">Ações Rápidas</TableHead>
+                  <TableHead className="w-[110px] px-3">Início Contrato</TableHead>
+                  <TableHead className="w-[140px] px-3">Próximo Passo</TableHead>
+                  <TableHead className="w-[200px] px-3 text-center">Ações Rápidas</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -505,18 +505,18 @@ export const CRMClientTable = ({
                       key={client.id}
                       className="hover:bg-muted/20 group border-b border-border/50"
                     >
-                      <TableCell className="py-4">
+                      <TableCell className="py-3 px-3 align-middle">
                         <Checkbox
                           checked={selectedClients.has(client.id)}
                           onCheckedChange={(checked) => handleSelectClient(client.id, checked as boolean)}
                         />
                       </TableCell>
-                      <TableCell className="py-4">
+                      <TableCell className="py-3 px-2 align-middle text-center">
                         <TemperatureBadge lastInteractionAt={client.last_interaction_at} />
                       </TableCell>
-                      <TableCell className="py-4">
-                        <div className="flex items-start gap-3">
-                          <div className="relative">
+                      <TableCell className="py-3 px-3 align-middle">
+                        <div className="flex items-center gap-3">
+                          <div className="relative flex-shrink-0">
                             <CandidateAvatar name={client.full_name} photoUrl={client.photo_url} size="md" />
                             {incomplete && (
                               <Tooltip>
@@ -529,45 +529,45 @@ export const CRMClientTable = ({
                               </Tooltip>
                             )}
                           </div>
-                          <div className="min-w-0 space-y-1">
+                          <div className="min-w-0">
                             <div className="flex items-center gap-2">
                               <button
                                 onClick={() => openViewDrawer(client)}
-                                className="font-medium hover:text-primary transition-colors truncate"
+                                className="font-medium hover:text-primary transition-colors truncate text-left"
                               >
                                 {client.full_name}
                               </button>
                               {isNew && (
-                                <Badge variant="secondary" className="bg-blue-100 text-blue-700 text-[10px]">
+                                <Badge variant="secondary" className="bg-blue-100 text-blue-700 text-[10px] flex-shrink-0">
                                   NOVO
                                 </Badge>
                               )}
                             </div>
-                            <p className="text-sm text-muted-foreground truncate">{client.email}</p>
+                            <p className="text-sm text-muted-foreground truncate max-w-[180px]">{client.email}</p>
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell className="py-4">
-                        <p className="text-sm font-medium">{getRelativeTime(client.last_interaction_at)}</p>
+                      <TableCell className="py-3 px-3 align-middle">
+                        <p className="text-sm">{getRelativeTime(client.last_interaction_at)}</p>
                       </TableCell>
-                      <TableCell className="py-4">
+                      <TableCell className="py-3 px-3 align-middle">
                         {client.contract_start_date ? (
                           <span className="text-sm">{format(new Date(client.contract_start_date), "dd/MM/yyyy")}</span>
                         ) : (
-                          <span className="text-xs text-muted-foreground italic">—</span>
+                          <span className="text-sm text-muted-foreground">—</span>
                         )}
                       </TableCell>
-                      <TableCell className="py-4">
+                      <TableCell className="py-3 px-3 align-middle">
                         {client.next_step ? (
-                          <Badge variant="outline" className="text-xs">
+                          <Badge variant="outline" className="text-xs whitespace-nowrap">
                             {client.next_step}
                           </Badge>
                         ) : (
-                          <span className="text-xs text-muted-foreground italic">Não definido</span>
+                          <span className="text-sm text-muted-foreground">—</span>
                         )}
                       </TableCell>
-                      <TableCell className="py-4">
-                        <div className="flex items-center justify-center gap-1">
+                      <TableCell className="py-3 px-3 align-middle">
+                        <div className="flex items-center justify-center gap-0.5">
                           {/* Quick action buttons - always visible */}
                           {client.phone && (
                             <Tooltip>
