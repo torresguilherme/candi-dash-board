@@ -33,8 +33,6 @@ import {
   User, 
   FileText, 
   Briefcase, 
-  Calendar,
-  DollarSign,
   GraduationCap,
   Camera,
   X,

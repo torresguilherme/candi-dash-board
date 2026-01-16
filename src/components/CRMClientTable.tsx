@@ -99,7 +99,7 @@ export interface CRMClient {
   contract_end_date: string | null;
   payment_method: string | null;
   installments_count: number | null;
-  installments_due_date: string | null;
+  installments_due_day: number | null;
   notes: string | null;
   last_interaction_at: string | null;
   next_step: string | null;
@@ -990,7 +990,7 @@ export const CRMClientTable = ({
                   contract_value: editingClient.contract_value ? String(editingClient.contract_value * 100) : "",
                   payment_method: editingClient.payment_method || "",
                   installments_count: editingClient.installments_count ? String(editingClient.installments_count) : "",
-                  installments_due_date: editingClient.installments_due_date || "",
+                  installments_due_date: editingClient.installments_due_day ? String(editingClient.installments_due_day) : "",
                   notes: editingClient.notes || "",
                   services: {
                     career_mentoring: editingServices.services?.career_mentoring || false,
