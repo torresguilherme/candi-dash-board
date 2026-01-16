@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useForm, UseFormReturn } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -12,6 +12,9 @@ import {
   FormMessage,
   FormDescription,
 } from "@/components/ui/form";
+import { useFormPersistence } from "@/hooks/useFormPersistence";
+import { AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -130,6 +133,7 @@ interface ClientFormProps {
   existingEmails?: string[];
   currentEmail?: string;
   existingPhotoUrl?: string | null;
+  clientId?: string; // For draft persistence
 }
 
 const regions = [
@@ -242,9 +246,17 @@ export const ClientForm = ({
   existingEmails = [],
   currentEmail,
   existingPhotoUrl,
+  clientId,
 }: ClientFormProps) => {
   const [photoPreview, setPhotoPreview] = useState<string | null>(existingPhotoUrl || null);
+  const [showDraftAlert, setShowDraftAlert] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
+  
+  // Use persistence for new clients only (not when editing)
+  const isNewClient = !defaultValues;
+  const { saveDraft, loadDraft, clearDraft, hasDraft } = useFormPersistence(
+    isNewClient ? undefined : clientId
+  );
 
   const form = useForm<ClientFormData>({
     resolver: zodResolver(clientFormSchema),
@@ -270,6 +282,48 @@ export const ClientForm = ({
       },
     },
   });
+
+  // Load draft on mount for new clients
+  useEffect(() => {
+    if (isNewClient && hasDraft) {
+      setShowDraftAlert(true);
+    }
+  }, [isNewClient, hasDraft]);
+
+  const handleRestoreDraft = useCallback(() => {
+    const draft = loadDraft();
+    if (draft) {
+      // Restore all fields except file fields
+      const { photo, resume, ...restoreData } = draft;
+      Object.entries(restoreData).forEach(([key, value]) => {
+        form.setValue(key as any, value);
+      });
+      toast.success("Rascunho restaurado!");
+    }
+    setShowDraftAlert(false);
+  }, [loadDraft, form]);
+
+  const handleDiscardDraft = useCallback(() => {
+    clearDraft();
+    setShowDraftAlert(false);
+  }, [clearDraft]);
+
+  // Auto-save draft when form changes (debounced)
+  const formValues = form.watch();
+  useEffect(() => {
+    if (!isNewClient) return;
+    
+    // Don't save empty forms
+    if (!formValues.full_name && !formValues.email) return;
+    
+    const timeoutId = setTimeout(() => {
+      // Save everything except File objects
+      const { photo, resume, ...dataToSave } = formValues;
+      saveDraft(dataToSave);
+    }, 1000);
+
+    return () => clearTimeout(timeoutId);
+  }, [formValues, isNewClient, saveDraft]);
 
   const watchServices = form.watch("services");
   const watchCourses = form.watch("courses");
@@ -321,6 +375,11 @@ export const ClientForm = ({
 
     try {
       await onSubmit(data);
+      
+      // Clear draft on successful save
+      if (isNewClient) {
+        clearDraft();
+      }
 
       if (!defaultValues) {
         form.reset();
@@ -335,7 +394,34 @@ export const ClientForm = ({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-        {/* Dados Pessoais */}
+        {/* Draft Recovery Alert */}
+        {showDraftAlert && (
+          <Alert className="border-amber-200 bg-amber-50 dark:bg-amber-950/20">
+            <AlertCircle className="h-4 w-4 text-amber-600" />
+            <AlertDescription className="flex items-center justify-between gap-4">
+              <span className="text-amber-800 dark:text-amber-200">
+                Você tem um rascunho salvo. Deseja restaurar?
+              </span>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleDiscardDraft}
+                >
+                  Descartar
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={handleRestoreDraft}
+                >
+                  Restaurar
+                </Button>
+              </div>
+            </AlertDescription>
+          </Alert>
+        )}
         <Card className="border-0 shadow-none">
           <CardHeader className="px-0 pt-0">
             <CardTitle className="text-lg flex items-center gap-2">

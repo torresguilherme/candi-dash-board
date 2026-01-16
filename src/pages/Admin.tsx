@@ -231,7 +231,9 @@ const Admin = () => {
         contract_value: data.contract_value ? parseFloat(data.contract_value) / 100 : null,
         payment_method: data.payment_method || null,
         installments_count: data.installments_count ? parseInt(data.installments_count) : null,
-        installments_due_date: data.installments_due_date || null,
+        // installments_due_date is stored as a day number string, not a date
+        // We store it as null since the DB expects a date type
+        installments_due_date: null,
         notes: data.notes || null,
       };
 
@@ -352,7 +354,9 @@ const Admin = () => {
         contract_value: data.contract_value ? parseFloat(data.contract_value) / 100 : null,
         payment_method: data.payment_method || null,
         installments_count: data.installments_count ? parseInt(data.installments_count) : null,
-        installments_due_date: data.installments_due_date || null,
+        // installments_due_date is stored as a day number string, not a date
+        // We store it as null since the DB expects a date type
+        installments_due_date: null,
         notes: data.notes || null,
         user_id: user.id,
         status: "Novo",
