@@ -20,7 +20,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Phone, Mail, MessageCircle, Calendar, FileText, Users } from "lucide-react";
+import { Phone, Mail, MessageCircle, Calendar, FileText, Users, Loader2 } from "lucide-react";
 
 interface InteractionLogDialogProps {
   open: boolean;
@@ -89,14 +89,20 @@ export const InteractionLogDialog = ({
         if (updateError) throw updateError;
       }
 
+      // Reset form and close dialog FIRST
+      resetForm();
+      onOpenChange(false);
+      
+      // Show success toast
       toast({
         title: "Interação registrada!",
         description: "O cliente foi marcado como 'Quente' automaticamente.",
       });
 
-      onSuccess();
-      onOpenChange(false);
-      resetForm();
+      // Refresh data AFTER dialog is closed to prevent blank screen
+      setTimeout(() => {
+        onSuccess();
+      }, 100);
     } catch (error: unknown) {
       console.error("Error logging interaction:", error);
       const errorMessage = error instanceof Error ? error.message : "Erro desconhecido";
@@ -193,11 +199,18 @@ export const InteractionLogDialog = ({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading}>
             Cancelar
           </Button>
           <Button onClick={handleSubmit} disabled={isLoading}>
-            {isLoading ? "Salvando..." : "Registrar Interação"}
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Salvando...
+              </>
+            ) : (
+              "Registrar Interação"
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>
