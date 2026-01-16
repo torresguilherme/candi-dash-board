@@ -73,6 +73,7 @@ import { ClientForm, ClientFormData } from "./ClientForm";
 import { TemperatureBadge, getTemperature, getRelativeTime } from "./admin/TemperatureBadge";
 import { QuickFilters, QuickFilterType } from "./admin/QuickFilters";
 import { InteractionLogDialog } from "./admin/InteractionLogDialog";
+import { InteractionHistory } from "./admin/InteractionHistory";
 import { EmailDialog } from "./EmailDialog";
 import { Badge } from "@/components/ui/badge";
 import { differenceInHours } from "date-fns";
@@ -919,6 +920,14 @@ export const CRMClientTable = ({
                 ) : (
                   <p className="text-sm text-muted-foreground">Nenhum serviço contratado</p>
                 )}
+              </div>
+
+              {/* Histórico de Interações */}
+              <div className="space-y-3 pt-3 border-t">
+                <h4 className="font-medium text-sm text-muted-foreground flex items-center gap-2">
+                  <MessageCircle className="h-4 w-4" /> Histórico de Interações
+                </h4>
+                <InteractionHistory clientId={viewingClient.id} />
               </div>
 
               {/* Observações */}
