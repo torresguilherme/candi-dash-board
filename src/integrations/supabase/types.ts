@@ -176,7 +176,7 @@ export type Database = {
           full_name: string
           id: string
           installments_count: number | null
-          installments_due_date: string | null
+          installments_due_day: number | null
           last_interaction_at: string | null
           linkedin_url: string | null
           next_step: string | null
@@ -206,7 +206,7 @@ export type Database = {
           full_name: string
           id?: string
           installments_count?: number | null
-          installments_due_date?: string | null
+          installments_due_day?: number | null
           last_interaction_at?: string | null
           linkedin_url?: string | null
           next_step?: string | null
@@ -236,7 +236,7 @@ export type Database = {
           full_name?: string
           id?: string
           installments_count?: number | null
-          installments_due_date?: string | null
+          installments_due_day?: number | null
           last_interaction_at?: string | null
           linkedin_url?: string | null
           next_step?: string | null
