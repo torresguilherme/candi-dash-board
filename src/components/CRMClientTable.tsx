@@ -145,6 +145,28 @@ export const CRMClientTable = ({
   const [emailClient, setEmailClient] = useState<CRMClient | null>(null);
   const itemsPerPage = 10;
 
+  // Download resume function
+  const handleDownloadResume = async (resumeUrl: string, clientName: string) => {
+    try {
+      toast.info("Baixando currículo...");
+      const response = await fetch(resumeUrl);
+      if (!response.ok) throw new Error("Falha ao baixar arquivo");
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `curriculo-${clientName.replace(/\s+/g, '-').toLowerCase()}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+      toast.success("Currículo baixado!");
+    } catch (error) {
+      console.error("Error downloading resume:", error);
+      toast.error("Erro ao baixar currículo. Tente novamente.");
+    }
+  };
+
   // Fetch services for a client
   const fetchClientServices = async (clientId: string) => {
     const { data } = await supabase
@@ -628,7 +650,7 @@ export const CRMClientTable = ({
                                   variant="ghost"
                                   size="icon"
                                   className="h-8 w-8 text-orange-600 hover:bg-orange-100 hover:text-orange-700"
-                                  onClick={() => window.open(client.resume_url!, "_blank", "noopener,noreferrer")}
+                                  onClick={() => handleDownloadResume(client.resume_url!, client.full_name)}
                                 >
                                   <FileText className="h-4 w-4" />
                                 </Button>
@@ -945,7 +967,7 @@ export const CRMClientTable = ({
                   Documentos
                 </Button>
                 {viewingClient.resume_url && (
-                  <Button variant="outline" onClick={() => window.open(viewingClient.resume_url!, "_blank", "noopener,noreferrer")}>
+                  <Button variant="outline" onClick={() => handleDownloadResume(viewingClient.resume_url!, viewingClient.full_name)}>
                     <FileText className="h-4 w-4 mr-2" />
                     Currículo
                   </Button>
