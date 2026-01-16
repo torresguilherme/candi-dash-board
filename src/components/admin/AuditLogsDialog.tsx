@@ -37,22 +37,29 @@ interface AuditLogsDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-const actionLabels: Record<string, { label: string; color: string }> = {
-  create: { label: "Criou", color: "bg-green-500" },
-  update: { label: "Atualizou", color: "bg-blue-500" },
-  delete: { label: "Excluiu", color: "bg-red-500" },
-  view: { label: "Visualizou", color: "bg-gray-500" },
-  import: { label: "Importou", color: "bg-purple-500" },
-  export: { label: "Exportou", color: "bg-orange-500" },
+const actionLabels: Record<string, { label: string; icon: string; color: string }> = {
+  create: { label: "Adicionou", icon: "➕", color: "text-green-600 bg-green-50" },
+  update: { label: "Editou", icon: "✏️", color: "text-blue-600 bg-blue-50" },
+  delete: { label: "Removeu", icon: "🗑️", color: "text-red-600 bg-red-50" },
+  view: { label: "Visualizou", icon: "👁️", color: "text-gray-600 bg-gray-50" },
+  import: { label: "Importou", icon: "📥", color: "text-purple-600 bg-purple-50" },
+  export: { label: "Exportou", icon: "📤", color: "text-orange-600 bg-orange-50" },
 };
 
 const entityLabels: Record<string, string> = {
-  client: "Cliente",
-  service: "Serviço",
-  document: "Documento",
-  meeting: "Reunião",
-  interaction: "Interação",
-  submission: "Submissão",
+  client: "cliente",
+  service: "serviço",
+  document: "documento",
+  meeting: "reunião",
+  interaction: "interação",
+  submission: "candidatura",
+};
+
+const formatActionMessage = (action: string, entityType: string, entityName?: string | null) => {
+  const actionInfo = actionLabels[action] || { label: action, icon: "📋", color: "text-gray-600 bg-gray-50" };
+  const entity = entityLabels[entityType] || entityType;
+  const name = entityName ? `"${entityName}"` : `um ${entity}`;
+  return `${actionInfo.icon} ${actionInfo.label} ${name}`;
 };
 
 export const AuditLogsDialog = ({ open, onOpenChange }: AuditLogsDialogProps) => {
@@ -100,11 +107,11 @@ export const AuditLogsDialog = ({ open, onOpenChange }: AuditLogsDialogProps) =>
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[85vh]">
+      <DialogContent className="max-w-2xl max-h-[85vh]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5" />
-            Logs de Auditoria
+            Histórico de Atividades
           </DialogTitle>
         </DialogHeader>
 
@@ -112,102 +119,65 @@ export const AuditLogsDialog = ({ open, onOpenChange }: AuditLogsDialogProps) =>
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Buscar por usuário ou entidade..."
+              placeholder="Buscar..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-9"
             />
           </div>
           <Select value={filterAction} onValueChange={setFilterAction}>
-            <SelectTrigger className="w-full sm:w-[150px]">
+            <SelectTrigger className="w-full sm:w-[140px]">
               <SelectValue placeholder="Ação" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todas ações</SelectItem>
-              <SelectItem value="create">Criar</SelectItem>
-              <SelectItem value="update">Atualizar</SelectItem>
-              <SelectItem value="delete">Excluir</SelectItem>
-              <SelectItem value="view">Visualizar</SelectItem>
-              <SelectItem value="import">Importar</SelectItem>
-              <SelectItem value="export">Exportar</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={filterEntity} onValueChange={setFilterEntity}>
-            <SelectTrigger className="w-full sm:w-[150px]">
-              <SelectValue placeholder="Entidade" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas entidades</SelectItem>
-              <SelectItem value="client">Cliente</SelectItem>
-              <SelectItem value="service">Serviço</SelectItem>
-              <SelectItem value="document">Documento</SelectItem>
-              <SelectItem value="meeting">Reunião</SelectItem>
-              <SelectItem value="interaction">Interação</SelectItem>
-              <SelectItem value="submission">Submissão</SelectItem>
+              <SelectItem value="all">Todas</SelectItem>
+              <SelectItem value="create">Adições</SelectItem>
+              <SelectItem value="update">Edições</SelectItem>
+              <SelectItem value="delete">Remoções</SelectItem>
+              <SelectItem value="import">Importações</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
-        <ScrollArea className="h-[500px] pr-4">
+        <ScrollArea className="h-[450px] pr-4">
           {loading ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-6 w-6 animate-spin text-primary" />
-              <span className="ml-2 text-muted-foreground">Carregando logs...</span>
+              <span className="ml-2 text-muted-foreground">Carregando...</span>
             </div>
           ) : filteredLogs.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              Nenhum log encontrado
+              Nenhuma atividade encontrada
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-2">
               {filteredLogs.map((log) => {
                 const actionInfo = actionLabels[log.action] || {
                   label: log.action,
-                  color: "bg-gray-500",
+                  icon: "📋",
+                  color: "text-gray-600 bg-gray-50",
                 };
-                const entityLabel = entityLabels[log.entity_type] || log.entity_type;
 
                 return (
                   <div
                     key={log.id}
-                    className="p-4 border rounded-lg bg-card hover:bg-accent/50 transition-colors"
+                    className={`p-3 rounded-lg border ${actionInfo.color} transition-colors`}
                   >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1 space-y-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <Badge className={`${actionInfo.color} text-white`}>
-                            {actionInfo.label}
-                          </Badge>
-                          <Badge variant="outline">{entityLabel}</Badge>
-                          {log.entity_name && (
-                            <span className="font-medium text-foreground">
-                              {log.entity_name}
-                            </span>
-                          )}
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm truncate">
+                          {formatActionMessage(log.action, log.entity_type, log.entity_name)}
+                        </p>
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
+                          <span className="flex items-center gap-1">
+                            <User className="h-3 w-3" />
+                            {log.user_email?.split('@')[0] || "Usuário"}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            {format(new Date(log.created_at), "dd/MM 'às' HH:mm", { locale: ptBR })}
+                          </span>
                         </div>
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                          <div className="flex items-center gap-1">
-                            <User className="h-3.5 w-3.5" />
-                            <span>{log.user_email || "Usuário desconhecido"}</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Clock className="h-3.5 w-3.5" />
-                            <span>
-                              {format(
-                                new Date(log.created_at),
-                                "dd/MM/yyyy 'às' HH:mm",
-                                { locale: ptBR }
-                              )}
-                            </span>
-                          </div>
-                        </div>
-                        {log.details && Object.keys(log.details).length > 0 && (
-                          <div className="mt-2 text-xs text-muted-foreground bg-muted/50 rounded p-2">
-                            <pre className="whitespace-pre-wrap">
-                              {JSON.stringify(log.details, null, 2)}
-                            </pre>
-                          </div>
-                        )}
                       </div>
                     </div>
                   </div>
