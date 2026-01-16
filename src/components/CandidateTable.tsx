@@ -15,8 +15,7 @@ import {
   MessageCircle,
   Mail,
   FileText,
-  MoreHorizontal,
-  Phone
+  MoreHorizontal
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -53,7 +52,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
+
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
@@ -112,22 +111,6 @@ export const CandidateTable = ({
     return cities;
   }, [candidates]);
 
-  const getStatusVariant = (status: string) => {
-    switch (status) {
-      case "Novo":
-        return "default";
-      case "Em Análise":
-        return "secondary";
-      case "Entrevista Agendada":
-        return "outline";
-      case "Aprovado":
-        return "default";
-      case "Rejeitado":
-        return "destructive";
-      default:
-        return "default";
-    }
-  };
 
   const getStatusColor = (status: string) => {
     switch (status) {

@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
@@ -7,7 +7,6 @@ import {
   Search,
   ArrowUpDown,
   ExternalLink,
-  Download,
   Eye,
   ChevronLeft,
   ChevronRight,
@@ -20,7 +19,6 @@ import {
   Plus,
   Phone,
   Briefcase,
-  GraduationCap,
   FileCheck,
   DollarSign,
   Loader2,
@@ -302,23 +300,6 @@ export const CRMClientTable = ({
     }
   };
 
-  const handleDownloadResume = async (resumeUrl: string, clientName: string) => {
-    try {
-      const response = await fetch(resumeUrl);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `curriculo-${clientName.replace(/\s+/g, "-").toLowerCase()}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-      toast.success("Currículo baixado com sucesso!");
-    } catch {
-      toast.error("Erro ao baixar currículo");
-    }
-  };
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
@@ -812,25 +793,25 @@ export const CRMClientTable = ({
               </Button>
               <div className="hidden sm:flex items-center gap-1">
                 {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                  let page;
+                  let pageNum: number;
                   if (totalPages <= 5) {
-                    page = i + 1;
+                    pageNum = i + 1;
                   } else if (currentPage <= 3) {
-                    page = i + 1;
+                    pageNum = i + 1;
                   } else if (currentPage >= totalPages - 2) {
-                    page = totalPages - 4 + i;
+                    pageNum = totalPages - 4 + i;
                   } else {
-                    page = currentPage - 2 + i;
+                    pageNum = currentPage - 2 + i;
                   }
                   return (
                     <Button
-                      key={page}
-                      variant={currentPage === page ? "default" : "outline"}
+                      key={pageNum}
+                      variant={currentPage === pageNum ? "default" : "outline"}
                       size="sm"
-                      onClick={() => setCurrentPage(page)}
+                      onClick={() => setCurrentPage(pageNum)}
                       className="w-9"
                     >
-                      {page}
+                      {pageNum}
                     </Button>
                   );
                 })}
