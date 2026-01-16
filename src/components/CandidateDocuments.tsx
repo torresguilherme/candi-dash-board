@@ -84,11 +84,6 @@ export const CandidateDocuments = ({ candidateId, candidateName }: CandidateDocu
 
       if (uploadError) throw uploadError;
 
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('candidate-documents')
-        .getPublicUrl(fileName);
-
       // Save document record
       const { error: dbError } = await supabase
         .from('client_documents')
