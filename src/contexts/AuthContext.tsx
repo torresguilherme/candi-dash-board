@@ -3,10 +3,15 @@ import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 
+type UserRole = 'admin' | 'editor' | 'user' | null;
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   isAdmin: boolean;
+  isEditor: boolean;
+  canAccess: boolean; // admin or editor
+  role: UserRole;
   loading: boolean;
   signOut: () => Promise<void>;
 }
@@ -16,9 +21,13 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [role, setRole] = useState<UserRole>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+
+  const isAdmin = role === 'admin';
+  const isEditor = role === 'editor';
+  const canAccess = role === 'admin' || role === 'editor';
 
   useEffect(() => {
     let mounted = true;
@@ -32,16 +41,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       // Important: do NOT block auth events (SIGNED_IN) with awaited DB calls.
       if (session?.user) {
-        setIsAdmin(false);
-        void checkAdminStatus(session.user.id)
-          .then((isAdmin) => {
-            if (mounted) setIsAdmin(isAdmin);
+        setRole(null);
+        void checkUserRole(session.user.id)
+          .then((userRole) => {
+            if (mounted) setRole(userRole);
           })
           .finally(() => {
             if (mounted) setLoading(false);
           });
       } else {
-        setIsAdmin(false);
+        setRole(null);
         setLoading(false);
       }
     };
@@ -67,19 +76,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, []);
 
-  const checkAdminStatus = async (userId: string): Promise<boolean> => {
+  const checkUserRole = async (userId: string): Promise<UserRole> => {
     try {
       const { data, error } = await supabase
         .from('user_roles')
         .select('role')
         .eq('user_id', userId)
-        .eq('role', 'admin')
         .maybeSingle();
 
-      if (error) return false;
-      return Boolean(data);
+      if (error || !data) return 'user';
+      return data.role as UserRole;
     } catch {
-      return false;
+      return 'user';
     }
   };
 
@@ -87,12 +95,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     await supabase.auth.signOut();
     setUser(null);
     setSession(null);
-    setIsAdmin(false);
+    setRole(null);
     navigate('/');
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, isAdmin, loading, signOut }}>
+    <AuthContext.Provider value={{ user, session, isAdmin, isEditor, canAccess, role, loading, signOut }}>
       {children}
     </AuthContext.Provider>
   );
