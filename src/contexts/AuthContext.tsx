@@ -78,14 +78,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const checkUserRole = async (userId: string): Promise<UserRole> => {
     try {
+      // Fetch all roles for the user (may have multiple)
       const { data, error } = await supabase
         .from('user_roles')
         .select('role')
-        .eq('user_id', userId)
-        .maybeSingle();
+        .eq('user_id', userId);
 
-      if (error || !data) return 'user';
-      return data.role as UserRole;
+      if (error || !data || data.length === 0) return 'user';
+      
+      // Return highest privilege role: admin > editor > user
+      const roles = data.map(r => r.role);
+      if (roles.includes('admin')) return 'admin';
+      if (roles.includes('editor')) return 'editor';
+      return 'user';
     } catch {
       return 'user';
     }
