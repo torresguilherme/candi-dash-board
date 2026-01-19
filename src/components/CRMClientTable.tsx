@@ -114,6 +114,7 @@ interface CRMClientTableProps {
   onBulkStatusChange?: (ids: string[], newStatus: string) => void;
   onBulkDelete?: (ids: string[]) => void;
   onRefresh: () => void;
+  canDelete?: boolean; // Only admins can delete
 }
 
 type SortField = "full_name" | "created_at" | "last_interaction_at";
@@ -126,6 +127,7 @@ export const CRMClientTable = ({
   onBulkStatusChange,
   onBulkDelete,
   onRefresh,
+  canDelete = true,
 }: CRMClientTableProps) => {
   const [editingClient, setEditingClient] = useState<CRMClient | null>(null);
   const [editingServices, setEditingServices] = useState<Record<string, any>>({});
@@ -414,10 +416,12 @@ export const CRMClientTable = ({
                   <SelectItem value="Inativo">Inativo</SelectItem>
                 </SelectContent>
               </Select>
-              <Button variant="destructive" size="sm" onClick={handleBulkDelete}>
-                <Trash2 className="h-4 w-4 mr-2" />
-                Excluir
-              </Button>
+              {canDelete && (
+                <Button variant="destructive" size="sm" onClick={handleBulkDelete}>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Excluir
+                </Button>
+              )}
               <Button variant="ghost" size="sm" onClick={() => setSelectedClients(new Set())}>
                 Cancelar
               </Button>
@@ -673,19 +677,21 @@ export const CRMClientTable = ({
                             <TooltipContent>Editar</TooltipContent>
                           </Tooltip>
 
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 text-destructive hover:bg-destructive/10 hover:text-destructive"
-                                onClick={() => setDeletingId(client.id)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>Excluir</TooltipContent>
-                          </Tooltip>
+                          {canDelete && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                                  onClick={() => setDeletingId(client.id)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Excluir</TooltipContent>
+                            </Tooltip>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>

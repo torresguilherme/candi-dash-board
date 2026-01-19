@@ -29,7 +29,7 @@ import { getUserFriendlyError } from "@/lib/error-utils";
 import { useAuditLog } from "@/hooks/useAuditLog";
 
 const Admin = () => {
-  const { user, isAdmin, loading, signOut } = useAuth();
+  const { user, isAdmin, canAccess, loading, signOut } = useAuth();
   const [clients, setClients] = useState<CRMClient[]>([]);
   const [loadingClients, setLoadingClients] = useState(true);
   const [isAddingClient, setIsAddingClient] = useState(false);
@@ -38,10 +38,10 @@ const Admin = () => {
   const { log } = useAuditLog();
 
   useEffect(() => {
-    if (user && isAdmin) {
+    if (user && canAccess) {
       fetchClients();
     }
-  }, [user, isAdmin]);
+  }, [user, canAccess]);
 
   const fetchClients = async () => {
     try {
@@ -187,7 +187,7 @@ const Admin = () => {
   };
 
   const handleEditClient = async (id: string, data: ClientFormData) => {
-    if (!user || !isAdmin) return;
+    if (!user || !canAccess) return;
 
     try {
       let resumeUrl: string | undefined = undefined;
@@ -304,7 +304,7 @@ const Admin = () => {
   };
 
   const handleAddClient = async (data: ClientFormData) => {
-    if (!user || !isAdmin) return;
+    if (!user || !canAccess) return;
 
     try {
       const clientId = crypto.randomUUID();
@@ -387,7 +387,7 @@ const Admin = () => {
   };
 
   const handleBulkStatusChange = async (ids: string[], newStatus: string) => {
-    if (!user || !isAdmin) return;
+    if (!user || !canAccess) return;
 
     try {
       const { error } = await supabase
@@ -513,7 +513,7 @@ const Admin = () => {
     return <Navigate to="/" replace />;
   }
 
-  if (!isAdmin) {
+  if (!canAccess) {
     return (
       <div className="min-h-screen bg-muted/30 flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
@@ -657,6 +657,7 @@ const Admin = () => {
                 onBulkStatusChange={handleBulkStatusChange}
                 onBulkDelete={handleBulkDelete}
                 onRefresh={fetchClients}
+                canDelete={isAdmin}
               />
             )}
           </CardContent>

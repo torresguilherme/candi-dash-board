@@ -23,13 +23,13 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user, isAdmin, loading: authLoading, signOut } = useAuth();
+  const { user, canAccess, loading: authLoading, signOut } = useAuth();
 
   useEffect(() => {
-    if (!authLoading && user && isAdmin) {
+    if (!authLoading && user && canAccess) {
       navigate("/admin", { replace: true });
     }
-  }, [authLoading, user, isAdmin, navigate]);
+  }, [authLoading, user, canAccess, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -121,7 +121,7 @@ const Auth = () => {
     );
   }
 
-  if (user && !isAdmin) {
+  if (user && !canAccess) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
