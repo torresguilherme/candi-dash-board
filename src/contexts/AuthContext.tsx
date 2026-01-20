@@ -31,44 +31,59 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     let mounted = true;
+    let isInitialLoad = true;
 
-    const syncAuthState = (session: Session | null) => {
+    const syncAuthState = async (session: Session | null) => {
       if (!mounted) return;
 
-      setLoading(true);
+      // Only set loading true on initial load to prevent flickering
+      if (isInitialLoad) {
+        setLoading(true);
+      }
+      
       setSession(session);
       setUser(session?.user ?? null);
 
-      // Important: do NOT block auth events (SIGNED_IN) with awaited DB calls.
       if (session?.user) {
-        setRole(null);
-        void checkUserRole(session.user.id)
-          .then((userRole) => {
-            if (mounted) setRole(userRole);
-          })
-          .finally(() => {
-            if (mounted) setLoading(false);
-          });
+        try {
+          const userRole = await checkUserRole(session.user.id);
+          if (mounted) {
+            setRole(userRole);
+          }
+        } catch {
+          if (mounted) {
+            setRole('user');
+          }
+        }
       } else {
         setRole(null);
+      }
+      
+      if (mounted) {
         setLoading(false);
+        isInitialLoad = false;
       }
     };
 
-    // Listener first (prevents missing SIGNED_IN events)
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      syncAuthState(session);
-    });
-
-    // Initial session load
+    // Initial session load first
     supabase.auth
       .getSession()
-      .then(({ data: { session } }) => syncAuthState(session))
+      .then(({ data: { session } }) => {
+        syncAuthState(session);
+      })
       .catch(() => {
         if (mounted) setLoading(false);
       });
+
+    // Then set up listener for future auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      // Avoid duplicate processing on initial load
+      if (!isInitialLoad) {
+        syncAuthState(session);
+      }
+    });
 
     return () => {
       mounted = false;
