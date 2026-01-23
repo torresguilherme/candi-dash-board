@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,12 +27,15 @@ import { ServiceAlertsCard } from "@/components/admin/ServiceAlertsCard";
 import { differenceInDays, differenceInHours } from "date-fns";
 import { getUserFriendlyError } from "@/lib/error-utils";
 import { useAuditLog } from "@/hooks/useAuditLog";
+import { UnsavedChangesDialog } from "@/components/UnsavedChangesDialog";
 
 const Admin = () => {
   const { user, isAdmin, canAccess, loading, signOut } = useAuth();
   const [clients, setClients] = useState<CRMClient[]>([]);
   const [loadingClients, setLoadingClients] = useState(true);
   const [isAddingClient, setIsAddingClient] = useState(false);
+  const [isFormDirty, setIsFormDirty] = useState(false);
+  const [showUnsavedWarning, setShowUnsavedWarning] = useState(false);
   const [activeFilter, setActiveFilter] = useState<"attention" | "today" | "leads" | "health" | null>(null);
   const { toast } = useToast();
   const { log } = useAuditLog();
@@ -555,7 +558,17 @@ const Admin = () => {
           </div>
           <div className="flex gap-2">
             <ImportExcelDialog onImportComplete={fetchClients} userId={user.id} />
-            <Dialog open={isAddingClient} onOpenChange={setIsAddingClient}>
+            <Dialog 
+              open={isAddingClient} 
+              onOpenChange={(open) => {
+                if (!open && isFormDirty) {
+                  setShowUnsavedWarning(true);
+                } else {
+                  setIsAddingClient(open);
+                  if (!open) setIsFormDirty(false);
+                }
+              }}
+            >
               <DialogTrigger asChild>
                 <Button size="lg" className="hidden sm:flex">
                   <UserPlus className="h-5 w-5 mr-2" />
@@ -567,10 +580,22 @@ const Admin = () => {
                   <DialogTitle>Adicionar Novo Cliente</DialogTitle>
                 </DialogHeader>
                 <div className="flex-1 overflow-y-auto p-6 pt-4">
-                  <ClientForm onSubmit={handleAddClient} />
+                  <ClientForm 
+                    onSubmit={handleAddClient} 
+                    onDirtyChange={setIsFormDirty}
+                  />
                 </div>
               </DialogContent>
             </Dialog>
+            <UnsavedChangesDialog
+              open={showUnsavedWarning}
+              onConfirm={() => {
+                setShowUnsavedWarning(false);
+                setIsAddingClient(false);
+                setIsFormDirty(false);
+              }}
+              onCancel={() => setShowUnsavedWarning(false)}
+            />
           </div>
         </div>
 

@@ -132,6 +132,7 @@ interface ClientFormProps {
   currentEmail?: string;
   existingPhotoUrl?: string | null;
   clientId?: string; // For draft persistence
+  onDirtyChange?: (isDirty: boolean) => void; // Callback for dirty state
 }
 
 const regions = [
@@ -245,6 +246,7 @@ export const ClientForm = ({
   currentEmail,
   existingPhotoUrl,
   clientId,
+  onDirtyChange,
 }: ClientFormProps) => {
   const [photoPreview, setPhotoPreview] = useState<string | null>(existingPhotoUrl || null);
   const [showDraftAlert, setShowDraftAlert] = useState(false);
@@ -327,6 +329,12 @@ export const ClientForm = ({
   const watchServices = form.watch("services");
   const watchCourses = form.watch("courses");
   const watchName = form.watch("full_name");
+
+  // Notify parent about dirty state changes
+  const isDirty = form.formState.isDirty;
+  useEffect(() => {
+    onDirtyChange?.(isDirty);
+  }, [isDirty, onDirtyChange]);
 
   const handlePhotoChange = (file: File | undefined) => {
     if (!file) return;
