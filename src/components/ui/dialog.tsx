@@ -34,7 +34,18 @@ interface DialogContentProps extends React.ComponentPropsWithoutRef<typeof Dialo
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   DialogContentProps
->(({ className, children, preventCloseOnFocusLoss = true, onFocusOutside, ...props }, ref) => (
+>(
+  (
+    {
+      className,
+      children,
+      preventCloseOnFocusLoss = true,
+      onFocusOutside,
+      onInteractOutside,
+      ...props
+    },
+    ref,
+  ) => (
   <DialogPortal>
     <DialogOverlay />
     <DialogPrimitive.Content
@@ -44,11 +55,23 @@ const DialogContent = React.forwardRef<
         className,
       )}
       onFocusOutside={(e) => {
-        // Prevent dialog from closing when switching browser tabs
-        if (preventCloseOnFocusLoss) {
+        // Prevent dialog from closing when switching browser tabs/windows.
+        // Only block when the document is not focused/visible (so clicks outside still behave normally).
+        const shouldPrevent =
+          preventCloseOnFocusLoss && (document.visibilityState === "hidden" || !document.hasFocus());
+        if (shouldPrevent) {
           e.preventDefault();
         }
         onFocusOutside?.(e);
+      }}
+      onInteractOutside={(e) => {
+        // Some browsers fire interact outside on tab switch; guard similarly.
+        const shouldPrevent =
+          preventCloseOnFocusLoss && (document.visibilityState === "hidden" || !document.hasFocus());
+        if (shouldPrevent) {
+          e.preventDefault();
+        }
+        onInteractOutside?.(e);
       }}
       {...props}
     >
@@ -59,7 +82,8 @@ const DialogContent = React.forwardRef<
       </DialogPrimitive.Close>
     </DialogPrimitive.Content>
   </DialogPortal>
-));
+  )
+);
 DialogContent.displayName = DialogPrimitive.Content.displayName;
 
 const DialogHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
