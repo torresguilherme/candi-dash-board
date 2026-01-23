@@ -77,6 +77,7 @@ import { InteractionHistory } from "./admin/InteractionHistory";
 import { EmailDialog } from "./EmailDialog";
 import { Badge } from "@/components/ui/badge";
 import { differenceInHours } from "date-fns";
+import { UnsavedChangesDialog } from "./UnsavedChangesDialog";
 
 export interface CRMClient {
   id: string;
@@ -145,6 +146,8 @@ export const CRMClientTable = ({
   const [folderClient, setFolderClient] = useState<CRMClient | null>(null);
   const [loggingClient, setLoggingClient] = useState<CRMClient | null>(null);
   const [emailClient, setEmailClient] = useState<CRMClient | null>(null);
+  const [isEditFormDirty, setIsEditFormDirty] = useState(false);
+  const [showEditUnsavedWarning, setShowEditUnsavedWarning] = useState(false);
   const itemsPerPage = 10;
 
   // Download resume function
@@ -996,7 +999,19 @@ export const CRMClientTable = ({
       </Drawer>
 
       {/* Edit Client Dialog */}
-      <Dialog open={!!editingClient} onOpenChange={() => setEditingClient(null)}>
+      <Dialog 
+        open={!!editingClient} 
+        onOpenChange={(open) => {
+          if (!open && isEditFormDirty) {
+            setShowEditUnsavedWarning(true);
+          } else {
+            if (!open) {
+              setEditingClient(null);
+              setIsEditFormDirty(false);
+            }
+          }
+        }}
+      >
         <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0">
           <DialogHeader className="p-6 pb-0">
             <DialogTitle>Editar Cliente</DialogTitle>
@@ -1010,6 +1025,7 @@ export const CRMClientTable = ({
             ) : editingClient ? (
               <ClientForm
                 onSubmit={handleEdit}
+                onDirtyChange={setIsEditFormDirty}
                 defaultValues={{
                   full_name: editingClient.full_name,
                   email: editingClient.email,
@@ -1055,6 +1071,17 @@ export const CRMClientTable = ({
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Unsaved Changes Warning for Edit Dialog */}
+      <UnsavedChangesDialog
+        open={showEditUnsavedWarning}
+        onConfirm={() => {
+          setShowEditUnsavedWarning(false);
+          setEditingClient(null);
+          setIsEditFormDirty(false);
+        }}
+        onCancel={() => setShowEditUnsavedWarning(false)}
+      />
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={!!deletingId} onOpenChange={() => setDeletingId(null)}>
