@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import * as XLSX from "xlsx";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { sendClientToWebhook } from "@/lib/webhook-utils";
 
 interface ImportExcelDialogProps {
   onImportComplete: () => void;
@@ -82,8 +83,11 @@ export function ImportExcelDialog({ onImportComplete, userId }: ImportExcelDialo
 
       for (const row of jsonData) {
         try {
+          const clientId = crypto.randomUUID();
+          
           // Map Excel columns to database fields
           const clientData = {
+            id: clientId,
             full_name: row["Nome completo"] || "",
             email: row["E-mail"] || "",
             phone: row["Telefone"] || null,
@@ -109,6 +113,21 @@ export function ImportExcelDialog({ onImportComplete, userId }: ImportExcelDialo
             failed++;
           } else {
             success++;
+            
+            // Send to webhook (fire and forget)
+            sendClientToWebhook({
+              id: clientId,
+              full_name: clientData.full_name,
+              email: clientData.email,
+              phone: clientData.phone,
+              area_of_interest: clientData.area_of_interest,
+              region: clientData.region,
+              linkedin_url: clientData.linkedin_url,
+              resume_url: clientData.resume_url,
+              notes: clientData.notes,
+              status: "Novo",
+              created_at: new Date().toISOString(),
+            });
           }
         } catch (error) {
           console.error("Error processing row:", error);

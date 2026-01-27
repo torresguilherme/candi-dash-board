@@ -28,6 +28,7 @@ import { differenceInDays, differenceInHours } from "date-fns";
 import { getUserFriendlyError } from "@/lib/error-utils";
 import { useAuditLog } from "@/hooks/useAuditLog";
 import { UnsavedChangesDialog } from "@/components/UnsavedChangesDialog";
+import { sendClientToWebhook } from "@/lib/webhook-utils";
 
 const Admin = () => {
   const { user, isAdmin, canAccess, loading, signOut } = useAuth();
@@ -373,6 +374,33 @@ const Admin = () => {
         entityId: clientId,
         entityName: data.full_name,
         details: { email: data.email },
+      });
+
+      // Send to webhook (fire and forget - don't block main flow)
+      sendClientToWebhook({
+        id: clientId,
+        full_name: data.full_name,
+        email: data.email,
+        phone: data.phone || null,
+        address: data.address || null,
+        rg: data.rg || null,
+        cpf: data.cpf || null,
+        education: data.education || null,
+        area_of_interest: data.area_of_interest || null,
+        region: data.region || null,
+        linkedin_url: data.linkedin_url || null,
+        resume_url: resumeUrl,
+        photo_url: photoPath,
+        contract_number: data.contract_number || null,
+        contract_start_date: data.contract_start_date || null,
+        contract_end_date: data.contract_end_date || null,
+        contract_value: data.contract_value ? parseFloat(data.contract_value) / 100 : null,
+        payment_method: data.payment_method || null,
+        installments_count: data.installments_count ? parseInt(data.installments_count) : null,
+        installments_due_day: data.installments_due_date ? parseInt(data.installments_due_date) : null,
+        notes: data.notes || null,
+        status: "Novo",
+        created_at: new Date().toISOString(),
       });
 
       toast({ title: "Cliente adicionado com sucesso!" });
