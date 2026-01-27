@@ -2,7 +2,7 @@
  * Webhook utility for sending client data to external services
  */
 
-const WEBHOOK_URL = "https://n8n.neurogrid.com.br/webhook-test/atualizarlista";
+const WEBHOOK_URL = "https://webhook.neurogrid.com.br/webhook/atualizarlista";
 
 interface ClientData {
   id: string;
