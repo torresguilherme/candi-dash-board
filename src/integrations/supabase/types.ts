@@ -165,6 +165,7 @@ export type Database = {
         Row: {
           address: string | null
           area_of_interest: string | null
+          contract_duration_months: number | null
           contract_end_date: string | null
           contract_number: string | null
           contract_start_date: string | null
@@ -195,6 +196,7 @@ export type Database = {
         Insert: {
           address?: string | null
           area_of_interest?: string | null
+          contract_duration_months?: number | null
           contract_end_date?: string | null
           contract_number?: string | null
           contract_start_date?: string | null
@@ -225,6 +227,7 @@ export type Database = {
         Update: {
           address?: string | null
           area_of_interest?: string | null
+          contract_duration_months?: number | null
           contract_end_date?: string | null
           contract_number?: string | null
           contract_start_date?: string | null

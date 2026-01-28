@@ -20,7 +20,7 @@ interface ClientData {
   photo_url?: string | null;
   contract_number?: string | null;
   contract_start_date?: string | null;
-  contract_end_date?: string | null;
+  contract_duration_months?: number | null;
   contract_value?: number | null;
   payment_method?: string | null;
   installments_count?: number | null;
