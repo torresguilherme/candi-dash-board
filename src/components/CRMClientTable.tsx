@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getServiceLabel } from "@/hooks/useClientServices";
+import { ContractProgress } from "@/components/ContractProgress";
 import { toast } from "sonner";
 import {
   Table,
@@ -98,7 +99,7 @@ export interface CRMClient {
   contract_value: number | null;
   contract_number: string | null;
   contract_start_date: string | null;
-  contract_end_date: string | null;
+  contract_duration_months: number | null;
   payment_method: string | null;
   installments_count: number | null;
   installments_due_day: number | null;
@@ -914,10 +915,19 @@ export const CRMClientTable = ({
                   <div><span className="text-muted-foreground">Nº Contrato:</span> {viewingClient.contract_number || "—"}</div>
                   <div><span className="text-muted-foreground">Valor:</span> {viewingClient.contract_value ? `R$ ${viewingClient.contract_value.toLocaleString("pt-BR")}` : "—"}</div>
                   <div><span className="text-muted-foreground">Início:</span> {viewingClient.contract_start_date ? format(new Date(viewingClient.contract_start_date), "dd/MM/yyyy") : "—"}</div>
-                  <div><span className="text-muted-foreground">Fim:</span> {viewingClient.contract_end_date ? format(new Date(viewingClient.contract_end_date), "dd/MM/yyyy") : "—"}</div>
+                  <div><span className="text-muted-foreground">Duração:</span> {viewingClient.contract_duration_months ? `${viewingClient.contract_duration_months} meses` : "—"}</div>
                   <div><span className="text-muted-foreground">Pagamento:</span> {viewingClient.payment_method || "—"}</div>
                   <div><span className="text-muted-foreground">Parcelas:</span> {viewingClient.installments_count || "—"}</div>
                 </div>
+                {/* Contract Progress */}
+                {viewingClient.contract_start_date && viewingClient.contract_duration_months && (
+                  <div className="mt-3">
+                    <ContractProgress 
+                      startDate={viewingClient.contract_start_date}
+                      durationMonths={viewingClient.contract_duration_months}
+                    />
+                  </div>
+                )}
               </div>
 
               {/* Última Atualização */}
@@ -1039,7 +1049,7 @@ export const CRMClientTable = ({
                   linkedin_url: editingClient.linkedin_url || "",
                   contract_number: editingClient.contract_number || "",
                   contract_start_date: editingClient.contract_start_date || "",
-                  contract_end_date: editingClient.contract_end_date || "",
+                  contract_duration_months: editingClient.contract_duration_months ? String(editingClient.contract_duration_months) : "",
                   contract_value: editingClient.contract_value ? String(editingClient.contract_value * 100) : "",
                   payment_method: editingClient.payment_method || "",
                   installments_count: editingClient.installments_count ? String(editingClient.installments_count) : "",

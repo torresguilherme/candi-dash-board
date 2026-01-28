@@ -38,6 +38,7 @@ import {
   X,
   CalendarClock
 } from "lucide-react";
+import { ContractProgress, calculateEndDate, getDurationLabel } from "@/components/ContractProgress";
 
 const clientFormSchema = z.object({
   // Dados Pessoais
@@ -57,7 +58,7 @@ const clientFormSchema = z.object({
   // Dados do Contrato
   contract_number: z.string().optional(),
   contract_start_date: z.string().optional(),
-  contract_end_date: z.string().optional(),
+  contract_duration_months: z.string().optional(), // "6", "9", or "12"
   contract_value: z.string().optional(),
   payment_method: z.string().optional(),
   installments_count: z.string().optional(),
@@ -747,13 +748,22 @@ export const ClientForm = ({
 
             <FormField
               control={form.control}
-              name="contract_end_date"
+              name="contract_duration_months"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Data Final</FormLabel>
-                  <FormControl>
-                    <Input type="date" {...field} />
-                  </FormControl>
+                  <FormLabel>Duração do Contrato</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="6">6 meses</SelectItem>
+                      <SelectItem value="9">9 meses</SelectItem>
+                      <SelectItem value="12">12 meses (1 ano)</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
@@ -851,6 +861,16 @@ export const ClientForm = ({
                 </FormItem>
               )}
             />
+            
+            {/* Contract Progress Indicator */}
+            {form.watch("contract_start_date") && form.watch("contract_duration_months") && (
+              <div className="lg:col-span-3 mt-4 p-4 bg-muted/30 rounded-lg">
+                <ContractProgress 
+                  startDate={form.watch("contract_start_date") || null}
+                  durationMonths={parseInt(form.watch("contract_duration_months") || "0")}
+                />
+              </div>
+            )}
           </CardContent>
         </Card>
 
