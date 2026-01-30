@@ -181,6 +181,7 @@ export type Database = {
           last_interaction_at: string | null
           linkedin_url: string | null
           next_step: string | null
+          next_step_assigned_to: string | null
           next_step_date: string | null
           notes: string | null
           payment_method: string | null
@@ -212,6 +213,7 @@ export type Database = {
           last_interaction_at?: string | null
           linkedin_url?: string | null
           next_step?: string | null
+          next_step_assigned_to?: string | null
           next_step_date?: string | null
           notes?: string | null
           payment_method?: string | null
@@ -243,6 +245,7 @@ export type Database = {
           last_interaction_at?: string | null
           linkedin_url?: string | null
           next_step?: string | null
+          next_step_assigned_to?: string | null
           next_step_date?: string | null
           notes?: string | null
           payment_method?: string | null
