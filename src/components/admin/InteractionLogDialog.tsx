@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -20,7 +20,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Phone, Mail, MessageCircle, Calendar, FileText, Users, Loader2 } from "lucide-react";
+import { Phone, Mail, MessageCircle, Calendar, FileText, Users, Loader2, UserCheck } from "lucide-react";
+
+interface TeamMember {
+  id: string;
+  email: string;
+}
 
 interface InteractionLogDialogProps {
   open: boolean;
@@ -50,8 +55,45 @@ export const InteractionLogDialog = ({
   const [notes, setNotes] = useState("");
   const [nextStep, setNextStep] = useState("");
   const [nextStepDate, setNextStepDate] = useState("");
+  const [nextStepAssignedTo, setNextStepAssignedTo] = useState("");
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+
+  // Fetch team members (admins and editors) when dialog opens
+  useEffect(() => {
+    if (open) {
+      fetchTeamMembers();
+    }
+  }, [open]);
+
+  const fetchTeamMembers = async () => {
+    try {
+      // Get all user IDs with admin or editor roles
+      const { data: roleData, error: roleError } = await supabase
+        .from("user_roles")
+        .select("user_id")
+        .in("role", ["admin", "editor"]);
+
+      if (roleError) throw roleError;
+
+      if (roleData && roleData.length > 0) {
+        const userIds = roleData.map((r) => r.user_id);
+        
+        // Get profiles for these users
+        const { data: profileData, error: profileError } = await supabase
+          .from("profiles")
+          .select("id, email")
+          .in("id", userIds);
+
+        if (profileError) throw profileError;
+
+        setTeamMembers(profileData || []);
+      }
+    } catch (error) {
+      console.error("Error fetching team members:", error);
+    }
+  };
 
   const handleSubmit = async () => {
     if (!interactionType) {
@@ -79,6 +121,7 @@ export const InteractionLogDialog = ({
       const updateData: Record<string, string | null> = {};
       if (nextStep) updateData.next_step = nextStep;
       if (nextStepDate) updateData.next_step_date = nextStepDate;
+      if (nextStepAssignedTo) updateData.next_step_assigned_to = nextStepAssignedTo;
       
       if (Object.keys(updateData).length > 0) {
         const { error: updateError } = await supabase
@@ -121,6 +164,7 @@ export const InteractionLogDialog = ({
     setNotes("");
     setNextStep("");
     setNextStepDate("");
+    setNextStepAssignedTo("");
   };
 
   return (
@@ -168,20 +212,41 @@ export const InteractionLogDialog = ({
             />
           </div>
 
+          <div className="space-y-2">
+            <Label htmlFor="nextStep">Próximo Passo</Label>
+            <Select value={nextStep} onValueChange={setNextStep}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o próximo passo..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Aguardando Resposta">Aguardando Resposta</SelectItem>
+                <SelectItem value="Enviar Proposta">Enviar Proposta</SelectItem>
+                <SelectItem value="Agendar Reunião">Agendar Reunião</SelectItem>
+                <SelectItem value="Follow-up">Follow-up</SelectItem>
+                <SelectItem value="Enviar Material">Enviar Material</SelectItem>
+                <SelectItem value="Aguardando Documentos">Aguardando Documentos</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="nextStep">Próximo Passo</Label>
-              <Select value={nextStep} onValueChange={setNextStep}>
+              <Label htmlFor="nextStepAssignedTo">
+                <div className="flex items-center gap-2">
+                  <UserCheck className="h-4 w-4" />
+                  Atribuir a
+                </div>
+              </Label>
+              <Select value={nextStepAssignedTo} onValueChange={setNextStepAssignedTo}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione..." />
+                  <SelectValue placeholder="Selecione o responsável..." />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Aguardando Resposta">Aguardando Resposta</SelectItem>
-                  <SelectItem value="Enviar Proposta">Enviar Proposta</SelectItem>
-                  <SelectItem value="Agendar Reunião">Agendar Reunião</SelectItem>
-                  <SelectItem value="Follow-up">Follow-up</SelectItem>
-                  <SelectItem value="Enviar Material">Enviar Material</SelectItem>
-                  <SelectItem value="Aguardando Documentos">Aguardando Documentos</SelectItem>
+                  {teamMembers.map((member) => (
+                    <SelectItem key={member.id} value={member.id}>
+                      {member.email}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
