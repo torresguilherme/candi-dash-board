@@ -2,7 +2,7 @@
  * Webhook utility for sending attention alerts for clients needing follow-up
  */
 
-const ATTENTION_WEBHOOK_URL = "https://n8n.neurogrid.com.br/webhook-test/atencao-clientes";
+const ATTENTION_WEBHOOK_URL = "https://webhook.neurogrid.com.br/webhook/atencao-clientes";
 
 export type AttentionLevel = "warm" | "urgent" | "super_urgent";
 
