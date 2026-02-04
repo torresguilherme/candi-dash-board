@@ -3,8 +3,10 @@ import { Button } from "@/components/ui/button";
 import { LogOut, Menu, FileText, Zap, Loader2 } from "lucide-react";
 import logoWhite from "@/assets/logo-white.png";
 import { AuditLogsDialog } from "./AuditLogsDialog";
-import { testAttentionWebhook } from "@/lib/attention-webhook";
+import { sendBulkAttentionWebhook, getAttentionLevel } from "@/lib/attention-webhook";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { differenceInDays } from "date-fns";
 
 interface AdminHeaderProps {
   onSignOut: () => void;
@@ -13,33 +15,73 @@ interface AdminHeaderProps {
 
 export const AdminHeader = ({ onSignOut, onToggleSidebar }: AdminHeaderProps) => {
   const [showLogs, setShowLogs] = useState(false);
-  const [testingWebhook, setTestingWebhook] = useState(false);
+  const [sendingWebhook, setSendingWebhook] = useState(false);
   const { toast } = useToast();
 
-  const handleTestWebhook = async () => {
-    setTestingWebhook(true);
+  const handleSendAttentionWebhook = async () => {
+    setSendingWebhook(true);
     try {
-      const success = await testAttentionWebhook();
-      if (success) {
+      // Fetch all clients from database
+      const { data: clients, error } = await supabase
+        .from("clients")
+        .select("*");
+
+      if (error) {
+        throw error;
+      }
+
+      // Filter clients that need attention (3+ days without interaction)
+      const clientsNeedingAttention = (clients || [])
+        .map(client => {
+          const daysDiff = client.last_interaction_at 
+            ? differenceInDays(new Date(), new Date(client.last_interaction_at))
+            : 999; // If no interaction, treat as very old
+          
+          const attentionLevel = getAttentionLevel(daysDiff);
+          
+          if (attentionLevel) {
+            return {
+              ...client,
+              attention_level: attentionLevel,
+              days_without_interaction: daysDiff,
+            };
+          }
+          return null;
+        })
+        .filter(Boolean);
+
+      if (clientsNeedingAttention.length === 0) {
         toast({
-          title: "Webhook testado com sucesso!",
-          description: "Os dados de teste foram enviados para o webhook.",
+          title: "Nenhum cliente precisa de atenção",
+          description: "Todos os clientes foram contatados recentemente.",
+        });
+        return;
+      }
+
+      // Send to webhook
+      const result = await sendBulkAttentionWebhook(clientsNeedingAttention as any);
+      
+      if (result.success > 0) {
+        toast({
+          title: "Webhook enviado com sucesso!",
+          description: `${result.success} cliente(s) enviado(s) para o webhook.`,
         });
       } else {
         toast({
-          title: "Falha no teste do webhook",
+          title: "Falha ao enviar webhook",
           description: "Não foi possível enviar os dados. Verifique a URL do webhook.",
           variant: "destructive",
         });
       }
     } catch (error) {
+      console.error("Error sending attention webhook:", error);
       toast({
-        title: "Erro ao testar webhook",
+        title: "Erro ao enviar webhook",
         description: "Ocorreu um erro inesperado.",
         variant: "destructive",
       });
     } finally {
-      setTestingWebhook(false);
+      setSendingWebhook(false);
     }
   };
 
@@ -63,16 +105,16 @@ export const AdminHeader = ({ onSignOut, onToggleSidebar }: AdminHeaderProps) =>
               <Button 
                 variant="ghost" 
                 size="sm"
-                onClick={handleTestWebhook}
-                disabled={testingWebhook}
+                onClick={handleSendAttentionWebhook}
+                disabled={sendingWebhook}
                 className="text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10"
               >
-                {testingWebhook ? (
+                {sendingWebhook ? (
                   <Loader2 className="h-4 w-4 animate-spin sm:mr-2" />
                 ) : (
                   <Zap className="h-4 w-4 sm:mr-2" />
                 )}
-                <span className="hidden sm:inline">Testar Webhook</span>
+                <span className="hidden sm:inline">Enviar Alertas</span>
               </Button>
               <Button 
                 variant="ghost" 
