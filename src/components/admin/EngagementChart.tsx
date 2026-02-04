@@ -18,7 +18,8 @@ interface EngagementChartProps {
 const COLORS = {
   hot: "hsl(142, 70%, 45%)",
   warm: "hsl(40, 95%, 55%)",
-  cold: "hsl(0, 75%, 55%)",
+  urgent: "hsl(25, 95%, 55%)",
+  needsAttention: "hsl(0, 75%, 55%)",
 };
 
 export const EngagementChart = ({ clients }: EngagementChartProps) => {
@@ -26,12 +27,14 @@ export const EngagementChart = ({ clients }: EngagementChartProps) => {
   const temperatureData = useMemo(() => {
     const hot = clients.filter((c) => getTemperature(c.last_interaction_at) === "hot").length;
     const warm = clients.filter((c) => getTemperature(c.last_interaction_at) === "warm").length;
-    const cold = clients.filter((c) => getTemperature(c.last_interaction_at) === "cold").length;
+    const urgent = clients.filter((c) => getTemperature(c.last_interaction_at) === "urgent").length;
+    const superUrgent = clients.filter((c) => getTemperature(c.last_interaction_at) === "super_urgent").length;
+    const needsAttention = urgent + superUrgent;
 
     return [
       { name: "Quentes", value: hot, color: COLORS.hot },
       { name: "Mornos", value: warm, color: COLORS.warm },
-      { name: "Frios", value: cold, color: COLORS.cold },
+      { name: "Atenção", value: needsAttention, color: COLORS.needsAttention },
     ].filter((d) => d.value > 0);
   }, [clients]);
 
