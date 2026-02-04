@@ -243,7 +243,10 @@ export const CRMClientTable = ({
       all: clients.length,
       hot: clients.filter((c) => getTemperature(c.last_interaction_at) === "hot").length,
       warm: clients.filter((c) => getTemperature(c.last_interaction_at) === "warm").length,
-      cold: clients.filter((c) => getTemperature(c.last_interaction_at) === "cold").length,
+      attention: clients.filter((c) => {
+        const temp = getTemperature(c.last_interaction_at);
+        return temp === "urgent" || temp === "super_urgent";
+      }).length,
       new: clients.filter((c) => isNewLead(c)).length,
       noNextStep: clients.filter((c) => !c.next_step).length,
     };
@@ -263,8 +266,9 @@ export const CRMClientTable = ({
           return getTemperature(client.last_interaction_at) === "hot";
         case "warm":
           return getTemperature(client.last_interaction_at) === "warm";
-        case "cold":
-          return getTemperature(client.last_interaction_at) === "cold";
+        case "attention":
+          const temp = getTemperature(client.last_interaction_at);
+          return temp === "urgent" || temp === "super_urgent";
         case "new":
           return isNewLead(client);
         case "no-next-step":

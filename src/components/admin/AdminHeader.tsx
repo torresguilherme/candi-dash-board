@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { LogOut, Menu, FileText } from "lucide-react";
+import { LogOut, Menu, FileText, Zap, Loader2 } from "lucide-react";
 import logoWhite from "@/assets/logo-white.png";
 import { AuditLogsDialog } from "./AuditLogsDialog";
+import { testAttentionWebhook } from "@/lib/attention-webhook";
+import { useToast } from "@/hooks/use-toast";
 
 interface AdminHeaderProps {
   onSignOut: () => void;
@@ -11,6 +13,35 @@ interface AdminHeaderProps {
 
 export const AdminHeader = ({ onSignOut, onToggleSidebar }: AdminHeaderProps) => {
   const [showLogs, setShowLogs] = useState(false);
+  const [testingWebhook, setTestingWebhook] = useState(false);
+  const { toast } = useToast();
+
+  const handleTestWebhook = async () => {
+    setTestingWebhook(true);
+    try {
+      const success = await testAttentionWebhook();
+      if (success) {
+        toast({
+          title: "Webhook testado com sucesso!",
+          description: "Os dados de teste foram enviados para o webhook.",
+        });
+      } else {
+        toast({
+          title: "Falha no teste do webhook",
+          description: "Não foi possível enviar os dados. Verifique a URL do webhook.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Erro ao testar webhook",
+        description: "Ocorreu um erro inesperado.",
+        variant: "destructive",
+      });
+    } finally {
+      setTestingWebhook(false);
+    }
+  };
 
   return (
     <>
@@ -29,6 +60,20 @@ export const AdminHeader = ({ onSignOut, onToggleSidebar }: AdminHeaderProps) =>
             </div>
             
             <div className="flex items-center gap-2">
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={handleTestWebhook}
+                disabled={testingWebhook}
+                className="text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10"
+              >
+                {testingWebhook ? (
+                  <Loader2 className="h-4 w-4 animate-spin sm:mr-2" />
+                ) : (
+                  <Zap className="h-4 w-4 sm:mr-2" />
+                )}
+                <span className="hidden sm:inline">Testar Webhook</span>
+              </Button>
               <Button 
                 variant="ghost" 
                 size="sm"

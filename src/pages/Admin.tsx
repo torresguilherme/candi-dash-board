@@ -22,7 +22,7 @@ import { LoadingSkeleton } from "@/components/admin/LoadingSkeleton";
 import { CRMClientTable, CRMClient } from "@/components/CRMClientTable";
 import { EngagementChart } from "@/components/admin/EngagementChart";
 import { ImportExcelDialog } from "@/components/ImportExcelDialog";
-import { getTemperature } from "@/components/admin/TemperatureBadge";
+import { getTemperature, getDaysWithoutInteraction } from "@/components/admin/TemperatureBadge";
 import { ServiceAlertsCard } from "@/components/admin/ServiceAlertsCard";
 import { differenceInDays, differenceInHours } from "date-fns";
 import { getUserFriendlyError } from "@/lib/error-utils";
@@ -495,7 +495,12 @@ const Admin = () => {
 
   // Calculate CRM engagement statistics
   const stats = useMemo(() => {
-    const needsAttention = clients.filter(c => getTemperature(c.last_interaction_at) === "cold").length;
+    // Count clients needing attention (warm: 3-5 days, urgent: 6 days, super_urgent: 7+ days)
+    const warmClients = clients.filter(c => getTemperature(c.last_interaction_at) === "warm").length;
+    const urgentClients = clients.filter(c => getTemperature(c.last_interaction_at) === "urgent").length;
+    const superUrgentClients = clients.filter(c => getTemperature(c.last_interaction_at) === "super_urgent").length;
+    const needsAttention = warmClients + urgentClients + superUrgentClients;
+    
     const newLeads = clients.filter(c => {
       const hours = differenceInHours(new Date(), new Date(c.created_at));
       return hours <= 24;
@@ -505,6 +510,9 @@ const Admin = () => {
 
     return {
       needsAttention,
+      warmClients,
+      urgentClients,
+      superUrgentClients,
       newLeads,
       todayTasks: clients.filter(c => c.next_step_date && differenceInDays(new Date(c.next_step_date), new Date()) === 0).length,
       healthScore,
@@ -517,7 +525,11 @@ const Admin = () => {
 
     switch (activeFilter) {
       case "attention":
-        return clients.filter(c => getTemperature(c.last_interaction_at) === "cold");
+        // Show all clients needing attention (warm, urgent, super_urgent)
+        return clients.filter(c => {
+          const temp = getTemperature(c.last_interaction_at);
+          return temp === "warm" || temp === "urgent" || temp === "super_urgent";
+        });
       case "today":
         return clients.filter(c => c.next_step_date && differenceInDays(new Date(c.next_step_date), new Date()) === 0);
       case "leads":
@@ -633,7 +645,11 @@ const Admin = () => {
             title="Atenção Necessária"
             value={stats.needsAttention}
             icon={AlertTriangle}
-            description={activeFilter === "attention" ? "Clique para limpar filtro" : "Sem contato há +7 dias"}
+            description={
+              activeFilter === "attention" 
+                ? "Clique para limpar filtro" 
+                : `${stats.warmClients} morno · ${stats.urgentClients} urgente · ${stats.superUrgentClients} super urgente`
+            }
             variant="danger"
             onClick={() => handleCardClick("attention")}
           />

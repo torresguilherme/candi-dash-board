@@ -1,22 +1,29 @@
-import { Flame, Sun, Snowflake } from "lucide-react";
+import { Flame, Sun, Thermometer, AlertTriangle, AlertOctagon } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { differenceInDays, differenceInHours } from "date-fns";
 
-type Temperature = "hot" | "warm" | "cold";
+// Updated temperature types with new attention levels
+export type Temperature = "hot" | "warm" | "urgent" | "super_urgent";
 
 interface TemperatureBadgeProps {
   lastInteractionAt: string | null;
 }
 
 export const getTemperature = (lastInteractionAt: string | null): Temperature => {
-  if (!lastInteractionAt) return "cold";
+  if (!lastInteractionAt) return "super_urgent";
   
   const daysDiff = differenceInDays(new Date(), new Date(lastInteractionAt));
   
   if (daysDiff < 3) return "hot";
-  if (daysDiff <= 7) return "warm";
-  return "cold";
+  if (daysDiff < 6) return "warm";
+  if (daysDiff < 7) return "urgent";
+  return "super_urgent";
+};
+
+export const getDaysWithoutInteraction = (lastInteractionAt: string | null): number => {
+  if (!lastInteractionAt) return 999;
+  return differenceInDays(new Date(), new Date(lastInteractionAt));
 };
 
 export const getRelativeTime = (dateString: string | null): string => {
@@ -43,18 +50,25 @@ const temperatureConfig = {
     iconClass: "text-green-600 dark:text-green-400",
   },
   warm: {
-    icon: Sun,
+    icon: Thermometer,
     label: "Morno",
-    description: "Interação entre 3-7 dias",
+    description: "Sem interação há 3-5 dias",
     className: "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
     iconClass: "text-amber-500 dark:text-amber-400",
   },
-  cold: {
-    icon: Snowflake,
-    label: "Frio",
-    description: "Sem interação há mais de 7 dias",
+  urgent: {
+    icon: AlertTriangle,
+    label: "Urgente",
+    description: "Sem interação há 6 dias",
+    className: "bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300",
+    iconClass: "text-orange-600 dark:text-orange-400",
+  },
+  super_urgent: {
+    icon: AlertOctagon,
+    label: "Super Urgente",
+    description: "Sem interação há 7+ dias",
     className: "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300",
-    iconClass: "text-red-500 dark:text-red-400",
+    iconClass: "text-red-600 dark:text-red-400",
   },
 };
 

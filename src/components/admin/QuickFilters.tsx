@@ -1,8 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Flame, Snowflake, Sun, UserPlus, AlertCircle } from "lucide-react";
+import { Flame, AlertOctagon, Thermometer, UserPlus, AlertCircle } from "lucide-react";
 
-export type QuickFilterType = "all" | "hot" | "warm" | "cold" | "new" | "no-next-step";
+export type QuickFilterType = "all" | "hot" | "warm" | "attention" | "new" | "no-next-step";
 
 interface QuickFiltersProps {
   activeFilter: QuickFilterType;
@@ -11,7 +11,7 @@ interface QuickFiltersProps {
     all: number;
     hot: number;
     warm: number;
-    cold: number;
+    attention: number;
     new: number;
     noNextStep: number;
   };
@@ -21,8 +21,8 @@ export const QuickFilters = ({ activeFilter, onFilterChange, counts }: QuickFilt
   const filters: { key: QuickFilterType; label: string; icon?: React.ElementType; color?: string }[] = [
     { key: "all", label: "Todos" },
     { key: "hot", label: "Quentes", icon: Flame, color: "text-green-600" },
-    { key: "warm", label: "Mornos", icon: Sun, color: "text-amber-500" },
-    { key: "cold", label: "Frios", icon: Snowflake, color: "text-red-500" },
+    { key: "warm", label: "Mornos", icon: Thermometer, color: "text-amber-500" },
+    { key: "attention", label: "Atenção", icon: AlertOctagon, color: "text-red-500" },
     { key: "new", label: "Novos", icon: UserPlus, color: "text-blue-600" },
     { key: "no-next-step", label: "Sem Próximo Passo", icon: AlertCircle, color: "text-orange-600" },
   ];
@@ -32,7 +32,7 @@ export const QuickFilters = ({ activeFilter, onFilterChange, counts }: QuickFilt
       case "all": return counts.all;
       case "hot": return counts.hot;
       case "warm": return counts.warm;
-      case "cold": return counts.cold;
+      case "attention": return counts.attention;
       case "new": return counts.new;
       case "no-next-step": return counts.noNextStep;
     }
