@@ -50,6 +50,38 @@ export type Database = {
         }
         Relationships: []
       }
+      candidate_meetings: {
+        Row: {
+          candidate_id: string
+          created_at: string
+          id: string
+          meeting_date: string
+          notes: string | null
+        }
+        Insert: {
+          candidate_id: string
+          created_at?: string
+          id?: string
+          meeting_date: string
+          notes?: string | null
+        }
+        Update: {
+          candidate_id?: string
+          created_at?: string
+          id?: string
+          meeting_date?: string
+          notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "candidate_meetings_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_documents: {
         Row: {
           client_id: string
