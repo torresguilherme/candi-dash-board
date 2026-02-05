@@ -1,10 +1,26 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { differenceInDays } from "https://esm.sh/date-fns@3";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+// Allowed origins for CORS - restrict to application domains only
+const ALLOWED_ORIGINS = [
+  "https://candi-dash-board.lovable.app",
+  "https://id-preview--0228b737-97f0-49e8-86db-9bd4e9fc98c5.lovable.app",
+  "http://localhost:8080",
+  "http://localhost:5173",
+];
+
+function getCorsHeaders(origin: string | null) {
+  // Check if the origin is allowed
+  const allowedOrigin = origin && ALLOWED_ORIGINS.some(allowed => 
+    origin === allowed || origin.endsWith(".lovable.app")
+  ) ? origin : ALLOWED_ORIGINS[0];
+  
+  return {
+    "Access-Control-Allow-Origin": allowedOrigin,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Credentials": "true",
+  };
+}
 
 const ATTENTION_WEBHOOK_URL = "https://webhook.neurogrid.com.br/webhook/atencao-clientes";
 
@@ -28,7 +44,38 @@ function getAttentionLevelLabel(level: AttentionLevel): string {
   }
 }
 
+/**
+ * Sanitizes client data by removing sensitive PII before external transmission.
+ * Complies with LGPD data minimization requirements.
+ */
+function sanitizeClientData(client: any) {
+  return {
+    id: client.id,
+    full_name: client.full_name,
+    email: client.email,
+    education: client.education,
+    area_of_interest: client.area_of_interest,
+    region: client.region,
+    linkedin_url: client.linkedin_url,
+    status: client.status,
+    next_step: client.next_step,
+    next_step_date: client.next_step_date,
+    last_interaction_at: client.last_interaction_at,
+    created_at: client.created_at,
+    attention_level: client.attention_level,
+    days_without_interaction: client.days_without_interaction,
+    // SECURITY: Explicitly excluding sensitive PII:
+    // - cpf, rg, address, phone (identity/contact info)
+    // - contract_value, payment_method, installments_count, installments_due_day (financial info)
+    // - resume_url, photo_url (personal documents)
+    // - notes (may contain sensitive information)
+  };
+}
+
 Deno.serve(async (req) => {
+  const origin = req.headers.get("origin");
+  const corsHeaders = getCorsHeaders(origin);
+  
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -121,7 +168,10 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Send to webhook
+    // Sanitize client data to remove sensitive PII before sending to webhook
+    const sanitizedClients = clientsNeedingAttention.map(sanitizeClientData);
+
+    // Send to webhook with sanitized data
     const response = await fetch(ATTENTION_WEBHOOK_URL, {
       method: "POST",
       headers: {
@@ -130,13 +180,13 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         event: "scheduled_attention_check",
         timestamp: new Date().toISOString(),
-        total_clients: clientsNeedingAttention.length,
+        total_clients: sanitizedClients.length,
         summary: {
-          warm: clientsNeedingAttention.filter((c: any) => c.attention_level === "warm").length,
-          urgent: clientsNeedingAttention.filter((c: any) => c.attention_level === "urgent").length,
-          super_urgent: clientsNeedingAttention.filter((c: any) => c.attention_level === "super_urgent").length,
+          warm: sanitizedClients.filter((c: any) => c.attention_level === "warm").length,
+          urgent: sanitizedClients.filter((c: any) => c.attention_level === "urgent").length,
+          super_urgent: sanitizedClients.filter((c: any) => c.attention_level === "super_urgent").length,
         },
-        data: clientsNeedingAttention,
+        data: sanitizedClients,
       }),
     });
 
@@ -144,17 +194,17 @@ Deno.serve(async (req) => {
       throw new Error(`Webhook response not ok: ${response.status}`);
     }
 
-    console.log(`Successfully sent ${clientsNeedingAttention.length} clients to attention webhook by user ${user.email}`);
+    console.log(`Successfully sent ${sanitizedClients.length} clients to attention webhook by user ${user.email}`);
 
     return new Response(
       JSON.stringify({
         success: true,
         message: "Attention alerts sent successfully",
-        clients_sent: clientsNeedingAttention.length,
+        clients_sent: sanitizedClients.length,
         summary: {
-          warm: clientsNeedingAttention.filter((c: any) => c.attention_level === "warm").length,
-          urgent: clientsNeedingAttention.filter((c: any) => c.attention_level === "urgent").length,
-          super_urgent: clientsNeedingAttention.filter((c: any) => c.attention_level === "super_urgent").length,
+          warm: sanitizedClients.filter((c: any) => c.attention_level === "warm").length,
+          urgent: sanitizedClients.filter((c: any) => c.attention_level === "urgent").length,
+          super_urgent: sanitizedClients.filter((c: any) => c.attention_level === "super_urgent").length,
         },
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -164,7 +214,7 @@ Deno.serve(async (req) => {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     return new Response(
       JSON.stringify({ success: false, error: errorMessage }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 500, headers: { ...getCorsHeaders(null), "Content-Type": "application/json" } }
     );
   }
 });
