@@ -39,6 +39,48 @@ Deno.serve(async (req) => {
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    // Authenticate the request
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ success: false, error: "Missing authorization header" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Verify JWT and get user
+    const token = authHeader.replace("Bearer ", "");
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    
+    if (authError || !user) {
+      return new Response(
+        JSON.stringify({ success: false, error: "Invalid authentication" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Check if user has admin or editor role
+    const { data: roles, error: rolesError } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id);
+    
+    if (rolesError) {
+      console.error("Error checking user roles:", rolesError);
+      return new Response(
+        JSON.stringify({ success: false, error: "Error checking permissions" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const hasAccess = roles?.some(r => r.role === "admin" || r.role === "editor");
+    if (!hasAccess) {
+      return new Response(
+        JSON.stringify({ success: false, error: "Insufficient permissions" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Fetch all clients
     const { data: clients, error } = await supabase
       .from("clients")
@@ -102,7 +144,7 @@ Deno.serve(async (req) => {
       throw new Error(`Webhook response not ok: ${response.status}`);
     }
 
-    console.log(`Successfully sent ${clientsNeedingAttention.length} clients to attention webhook`);
+    console.log(`Successfully sent ${clientsNeedingAttention.length} clients to attention webhook by user ${user.email}`);
 
     return new Response(
       JSON.stringify({
