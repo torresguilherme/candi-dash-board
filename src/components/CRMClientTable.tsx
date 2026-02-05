@@ -151,11 +151,27 @@ export const CRMClientTable = ({
   const [showEditUnsavedWarning, setShowEditUnsavedWarning] = useState(false);
   const itemsPerPage = 10;
 
-  // Download resume function
+  // Download resume function - handles both new private bucket paths and legacy public URLs
   const handleDownloadResume = async (resumeUrl: string, clientName: string) => {
     try {
       toast.info("Baixando currículo...");
-      const response = await fetch(resumeUrl);
+      
+      let downloadUrl = resumeUrl;
+      
+      // Check if this is a path (new format) rather than a full URL (legacy)
+      if (!resumeUrl.startsWith("http")) {
+        // Generate signed URL for private client-resumes bucket
+        const { data: signedData, error: signedError } = await supabase.storage
+          .from("client-resumes")
+          .createSignedUrl(resumeUrl, 3600); // 1 hour expiry
+        
+        if (signedError || !signedData?.signedUrl) {
+          throw new Error("Não foi possível gerar URL de download");
+        }
+        downloadUrl = signedData.signedUrl;
+      }
+      
+      const response = await fetch(downloadUrl);
       if (!response.ok) throw new Error("Falha ao baixar arquivo");
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);

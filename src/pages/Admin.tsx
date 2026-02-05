@@ -177,17 +177,15 @@ const Admin = () => {
     const fileExt = file.name.split('.').pop();
     const fileName = `${userId}/${clientId}.${fileExt}`;
 
+    // Use private client-resumes bucket instead of public resumes bucket
     const { error: uploadError } = await supabase.storage
-      .from('resumes')
+      .from('client-resumes')
       .upload(fileName, file, { upsert: true });
 
     if (uploadError) throw uploadError;
 
-    const { data: { publicUrl } } = supabase.storage
-      .from('resumes')
-      .getPublicUrl(fileName);
-
-    return publicUrl;
+    // Store just the path - we'll generate signed URLs when displaying
+    return fileName;
   };
 
   const handleEditClient = async (id: string, data: ClientFormData) => {

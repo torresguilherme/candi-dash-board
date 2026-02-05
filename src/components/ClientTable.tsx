@@ -22,6 +22,7 @@ import {
   CheckCircle,
   Ban
 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
   Table,
@@ -225,7 +226,25 @@ export const ClientTable = ({
 
   const handleDownloadResume = async (resumeUrl: string, clientName: string) => {
     try {
-      const response = await fetch(resumeUrl);
+      toast.info("Baixando currículo...");
+      
+      let downloadUrl = resumeUrl;
+      
+      // Check if this is a path (new format) rather than a full URL (legacy)
+      if (!resumeUrl.startsWith("http")) {
+        // Generate signed URL for private client-resumes bucket
+        const { data: signedData, error: signedError } = await supabase.storage
+          .from("client-resumes")
+          .createSignedUrl(resumeUrl, 3600); // 1 hour expiry
+        
+        if (signedError || !signedData?.signedUrl) {
+          throw new Error("Não foi possível gerar URL de download");
+        }
+        downloadUrl = signedData.signedUrl;
+      }
+      
+      const response = await fetch(downloadUrl);
+      if (!response.ok) throw new Error("Falha ao baixar arquivo");
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -237,6 +256,7 @@ export const ClientTable = ({
       document.body.removeChild(a);
       toast.success("Currículo baixado com sucesso!");
     } catch (error) {
+      console.error("Error downloading resume:", error);
       toast.error("Erro ao baixar currículo");
     }
   };
