@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { LogOut, Menu, FileText, Zap, Loader2 } from "lucide-react";
+import { LogOut, Menu, FileText, Zap, Loader2, Upload } from "lucide-react";
 import logoWhite from "@/assets/logo-white.png";
 import { AuditLogsDialog } from "./AuditLogsDialog";
 import { sendBulkAttentionWebhook, getAttentionLevel } from "@/lib/attention-webhook";
+import { sendAllClientsToWebhook } from "@/lib/clients-export-webhook";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { differenceInDays } from "date-fns";
@@ -16,7 +17,55 @@ interface AdminHeaderProps {
 export const AdminHeader = ({ onSignOut, onToggleSidebar }: AdminHeaderProps) => {
   const [showLogs, setShowLogs] = useState(false);
   const [sendingWebhook, setSendingWebhook] = useState(false);
+  const [sendingExport, setSendingExport] = useState(false);
   const { toast } = useToast();
+
+  const handleExportAllClients = async () => {
+    setSendingExport(true);
+    try {
+      // Fetch all clients from database with all fields
+      const { data: clients, error } = await supabase
+        .from("clients")
+        .select("*");
+
+      if (error) {
+        throw error;
+      }
+
+      if (!clients || clients.length === 0) {
+        toast({
+          title: "Nenhum cliente encontrado",
+          description: "Não há clientes cadastrados para exportar.",
+        });
+        return;
+      }
+
+      // Send to webhook
+      const result = await sendAllClientsToWebhook(clients);
+      
+      if (result.success) {
+        toast({
+          title: "Exportação enviada com sucesso!",
+          description: result.message,
+        });
+      } else {
+        toast({
+          title: "Falha ao exportar",
+          description: result.message,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error exporting clients:", error);
+      toast({
+        title: "Erro ao exportar",
+        description: "Ocorreu um erro inesperado.",
+        variant: "destructive",
+      });
+    } finally {
+      setSendingExport(false);
+    }
+  };
 
   const handleSendAttentionWebhook = async () => {
     setSendingWebhook(true);
@@ -102,6 +151,20 @@ export const AdminHeader = ({ onSignOut, onToggleSidebar }: AdminHeaderProps) =>
             </div>
             
             <div className="flex items-center gap-2">
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={handleExportAllClients}
+                disabled={sendingExport}
+                className="text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10"
+              >
+                {sendingExport ? (
+                  <Loader2 className="h-4 w-4 animate-spin sm:mr-2" />
+                ) : (
+                  <Upload className="h-4 w-4 sm:mr-2" />
+                )}
+                <span className="hidden sm:inline">Exportar Clientes</span>
+              </Button>
               <Button 
                 variant="ghost" 
                 size="sm"
