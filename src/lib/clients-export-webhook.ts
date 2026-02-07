@@ -1,5 +1,5 @@
 /**
- * Webhook utility for exporting all client data to external system
+ * Webhook utility for exporting client data to external system
  */
 
 const EXPORT_WEBHOOK_URL = "https://n8n.neurogrid.com.br/webhook-test/clientesvagasperson";
@@ -34,6 +34,76 @@ interface ClientExportData {
   last_interaction_at?: string | null;
   created_at?: string;
   updated_at?: string;
+}
+
+type EventType = "client_created" | "client_updated" | "client_deleted" | "client_status_changed" | "clients_full_export";
+
+/**
+ * Sends a single client data to the webhook (for create/update/delete events)
+ */
+export async function sendClientChangeToWebhook(
+  client: ClientExportData, 
+  event: EventType,
+  additionalData?: Record<string, any>
+): Promise<void> {
+  try {
+    const response = await fetch(EXPORT_WEBHOOK_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        event,
+        timestamp: new Date().toISOString(),
+        data: client,
+        ...additionalData,
+      }),
+    });
+
+    if (!response.ok) {
+      console.error("Client change webhook response not ok:", response.status, response.statusText);
+    } else {
+      console.log(`Client ${event} sent to webhook successfully`);
+    }
+  } catch (error) {
+    // Log but don't throw - webhook failure shouldn't block client operations
+    console.error("Failed to send client change to webhook:", error);
+  }
+}
+
+/**
+ * Sends multiple clients status change to the webhook
+ */
+export async function sendBulkStatusChangeToWebhook(
+  clientIds: string[],
+  newStatus: string,
+  clients: ClientExportData[]
+): Promise<void> {
+  try {
+    const affectedClients = clients.filter(c => clientIds.includes(c.id));
+    
+    const response = await fetch(EXPORT_WEBHOOK_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        event: "client_status_changed",
+        timestamp: new Date().toISOString(),
+        new_status: newStatus,
+        total_affected: affectedClients.length,
+        data: affectedClients.map(c => ({ ...c, status: newStatus })),
+      }),
+    });
+
+    if (!response.ok) {
+      console.error("Bulk status webhook response not ok:", response.status, response.statusText);
+    } else {
+      console.log("Bulk status change sent to webhook successfully");
+    }
+  } catch (error) {
+    console.error("Failed to send bulk status change to webhook:", error);
+  }
 }
 
 /**
