@@ -1,17 +1,11 @@
 /**
  * Webhook utility for sending attention alerts for clients needing follow-up
- * 
- * SECURITY: This utility implements data minimization to comply with LGPD/GDPR.
- * Sensitive PII (CPF, RG, addresses, phone numbers, payment details) are NOT sent.
  */
 
 const ATTENTION_WEBHOOK_URL = "https://webhook.neurogrid.com.br/webhook/atencao-clientes";
 
 export type AttentionLevel = "warm" | "urgent" | "super_urgent";
 
-/**
- * Full client attention data interface (for internal use)
- */
 interface ClientAttentionData {
   id: string;
   full_name: string;
@@ -45,49 +39,6 @@ interface ClientAttentionData {
   days_without_interaction: number;
 }
 
-/**
- * Sanitized client data for webhook - excludes sensitive PII
- */
-interface SanitizedAttentionData {
-  id: string;
-  full_name: string;
-  email: string;
-  education?: string | null;
-  area_of_interest?: string | null;
-  region?: string | null;
-  linkedin_url?: string | null;
-  status?: string;
-  next_step?: string | null;
-  next_step_date?: string | null;
-  last_interaction_at?: string | null;
-  created_at?: string;
-  attention_level: AttentionLevel;
-  days_without_interaction: number;
-}
-
-/**
- * Sanitizes client data by removing sensitive PII before external transmission.
- * Complies with LGPD data minimization requirements.
- */
-function sanitizeForWebhook(clientData: ClientAttentionData): SanitizedAttentionData {
-  return {
-    id: clientData.id,
-    full_name: clientData.full_name,
-    email: clientData.email,
-    education: clientData.education,
-    area_of_interest: clientData.area_of_interest,
-    region: clientData.region,
-    linkedin_url: clientData.linkedin_url,
-    status: clientData.status,
-    next_step: clientData.next_step,
-    next_step_date: clientData.next_step_date,
-    last_interaction_at: clientData.last_interaction_at,
-    created_at: clientData.created_at,
-    attention_level: clientData.attention_level,
-    days_without_interaction: clientData.days_without_interaction,
-  };
-}
-
 export function getAttentionLevel(daysDiff: number): AttentionLevel | null {
   if (daysDiff >= 7) return "super_urgent";
   if (daysDiff >= 6) return "urgent";
@@ -108,13 +59,9 @@ export function getAttentionLevelLabel(level: AttentionLevel): string {
 
 /**
  * Sends attention alert for a client to the webhook
- * 
- * SECURITY: Sensitive PII is automatically stripped before transmission.
  */
 export async function sendAttentionWebhook(clientData: ClientAttentionData): Promise<boolean> {
   try {
-    const sanitizedData = sanitizeForWebhook(clientData);
-    
     const response = await fetch(ATTENTION_WEBHOOK_URL, {
       method: "POST",
       headers: {
@@ -123,10 +70,10 @@ export async function sendAttentionWebhook(clientData: ClientAttentionData): Pro
       body: JSON.stringify({
         event: "attention_needed",
         timestamp: new Date().toISOString(),
-        attention_level: sanitizedData.attention_level,
-        attention_level_label: getAttentionLevelLabel(sanitizedData.attention_level),
-        days_without_interaction: sanitizedData.days_without_interaction,
-        data: sanitizedData,
+        attention_level: clientData.attention_level,
+        attention_level_label: getAttentionLevelLabel(clientData.attention_level),
+        days_without_interaction: clientData.days_without_interaction,
+        data: clientData,
       }),
     });
 
@@ -145,13 +92,9 @@ export async function sendAttentionWebhook(clientData: ClientAttentionData): Pro
 
 /**
  * Send multiple attention alerts to the webhook
- * 
- * SECURITY: Sensitive PII is automatically stripped before transmission.
  */
 export async function sendBulkAttentionWebhook(clients: ClientAttentionData[]): Promise<{ success: number; failed: number }> {
   try {
-    const sanitizedClients = clients.map(sanitizeForWebhook);
-    
     const response = await fetch(ATTENTION_WEBHOOK_URL, {
       method: "POST",
       headers: {
@@ -160,13 +103,13 @@ export async function sendBulkAttentionWebhook(clients: ClientAttentionData[]): 
       body: JSON.stringify({
         event: "bulk_attention_needed",
         timestamp: new Date().toISOString(),
-        total_clients: sanitizedClients.length,
+        total_clients: clients.length,
         summary: {
-          warm: sanitizedClients.filter(c => c.attention_level === "warm").length,
-          urgent: sanitizedClients.filter(c => c.attention_level === "urgent").length,
-          super_urgent: sanitizedClients.filter(c => c.attention_level === "super_urgent").length,
+          warm: clients.filter(c => c.attention_level === "warm").length,
+          urgent: clients.filter(c => c.attention_level === "urgent").length,
+          super_urgent: clients.filter(c => c.attention_level === "super_urgent").length,
         },
-        data: sanitizedClients,
+        data: clients,
       }),
     });
 
