@@ -29,6 +29,7 @@ import { getUserFriendlyError } from "@/lib/error-utils";
 import { useAuditLog } from "@/hooks/useAuditLog";
 import { UnsavedChangesDialog } from "@/components/UnsavedChangesDialog";
 import { sendClientToWebhook } from "@/lib/webhook-utils";
+import { sendClientChangeToWebhook, sendBulkStatusChangeToWebhook } from "@/lib/clients-export-webhook";
 
 const Admin = () => {
   const { user, isAdmin, canAccess, loading, signOut } = useAuth();
@@ -255,6 +256,12 @@ const Admin = () => {
         details: { email: data.email },
       });
 
+      // Fetch updated client and send to webhook
+      const { data: updatedClient } = await supabase.from("clients").select("*").eq("id", id).single();
+      if (updatedClient) {
+        sendClientChangeToWebhook(updatedClient, "client_updated");
+      }
+
       toast({ title: "Cliente atualizado com sucesso!" });
       await fetchClients();
     } catch (error: unknown) {
@@ -374,8 +381,8 @@ const Admin = () => {
         details: { email: data.email },
       });
 
-      // Send to webhook (fire and forget - don't block main flow)
-      sendClientToWebhook({
+      // Send to both webhooks (fire and forget - don't block main flow)
+      const clientPayload = {
         id: clientId,
         full_name: data.full_name,
         email: data.email,
@@ -399,7 +406,10 @@ const Admin = () => {
         notes: data.notes || null,
         status: "Novo",
         created_at: new Date().toISOString(),
-      });
+      };
+      
+      sendClientToWebhook(clientPayload);
+      sendClientChangeToWebhook(clientPayload, "client_created");
 
       toast({ title: "Cliente adicionado com sucesso!" });
       setIsAddingClient(false);
@@ -437,6 +447,9 @@ const Admin = () => {
           details: { status: newStatus, bulkAction: true },
         });
       }
+
+      // Send bulk status change to webhook
+      sendBulkStatusChangeToWebhook(ids, newStatus, clients);
 
       fetchClients();
       toast({
