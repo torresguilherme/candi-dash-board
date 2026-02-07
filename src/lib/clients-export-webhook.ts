@@ -2,6 +2,8 @@
  * Webhook utility for exporting client data to external system
  */
 
+import { supabase } from "@/integrations/supabase/client";
+
 const EXPORT_WEBHOOK_URL = "https://n8n.neurogrid.com.br/webhook-test/clientesvagasperson";
 
 interface ClientExportData {
@@ -36,7 +38,85 @@ interface ClientExportData {
   updated_at?: string;
 }
 
+interface FileData {
+  filename: string;
+  content_type: string;
+  base64: string;
+}
+
 type EventType = "client_created" | "client_updated" | "client_deleted" | "client_status_changed" | "clients_full_export";
+
+/**
+ * Fetches a file from Supabase storage and returns it as base64
+ */
+async function fetchFileAsBase64(bucket: string, path: string): Promise<FileData | null> {
+  try {
+    if (!path) return null;
+    
+    // If it's already a full URL, extract the path
+    let filePath = path;
+    if (path.startsWith("http")) {
+      const idx = path.indexOf(`${bucket}/`);
+      if (idx !== -1) {
+        filePath = path.substring(idx + bucket.length + 1);
+      } else {
+        return null; // Can't extract path from URL
+      }
+    }
+
+    const { data, error } = await supabase.storage
+      .from(bucket)
+      .download(filePath);
+
+    if (error || !data) {
+      console.error(`Error downloading file from ${bucket}/${filePath}:`, error);
+      return null;
+    }
+
+    // Convert blob to base64
+    const arrayBuffer = await data.arrayBuffer();
+    const base64 = btoa(
+      new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte), '')
+    );
+
+    // Extract filename from path
+    const filename = filePath.split('/').pop() || 'file';
+    
+    return {
+      filename,
+      content_type: data.type || 'application/octet-stream',
+      base64,
+    };
+  } catch (error) {
+    console.error("Error fetching file as base64:", error);
+    return null;
+  }
+}
+
+/**
+ * Enriches client data with actual file contents
+ */
+async function enrichClientWithFiles(client: ClientExportData): Promise<ClientExportData & { photo_file?: FileData; resume_file?: FileData }> {
+  const enriched: ClientExportData & { photo_file?: FileData; resume_file?: FileData } = { ...client };
+
+  // Fetch photo file
+  if (client.photo_url) {
+    const photoFile = await fetchFileAsBase64('client-photos', client.photo_url);
+    if (photoFile) {
+      enriched.photo_file = photoFile;
+    }
+  }
+
+  // Fetch resume file
+  if (client.resume_url) {
+    const resumeFile = await fetchFileAsBase64('client-resumes', client.resume_url);
+    if (resumeFile) {
+      enriched.resume_file = resumeFile;
+    }
+  }
+
+  return enriched;
+}
 
 /**
  * Sends a single client data to the webhook (for create/update/delete events)
@@ -47,6 +127,9 @@ export async function sendClientChangeToWebhook(
   additionalData?: Record<string, any>
 ): Promise<void> {
   try {
+    // Enrich client with file contents
+    const enrichedClient = await enrichClientWithFiles(client);
+
     const response = await fetch(EXPORT_WEBHOOK_URL, {
       method: "POST",
       headers: {
@@ -55,7 +138,7 @@ export async function sendClientChangeToWebhook(
       body: JSON.stringify({
         event,
         timestamp: new Date().toISOString(),
-        data: client,
+        data: enrichedClient,
         ...additionalData,
       }),
     });
@@ -63,7 +146,7 @@ export async function sendClientChangeToWebhook(
     if (!response.ok) {
       console.error("Client change webhook response not ok:", response.status, response.statusText);
     } else {
-      console.log(`Client ${event} sent to webhook successfully`);
+      console.log(`Client ${event} sent to webhook successfully (with files)`);
     }
   } catch (error) {
     // Log but don't throw - webhook failure shouldn't block client operations
@@ -82,6 +165,11 @@ export async function sendBulkStatusChangeToWebhook(
   try {
     const affectedClients = clients.filter(c => clientIds.includes(c.id));
     
+    // Enrich all affected clients with file contents
+    const enrichedClients = await Promise.all(
+      affectedClients.map(c => enrichClientWithFiles({ ...c, status: newStatus }))
+    );
+    
     const response = await fetch(EXPORT_WEBHOOK_URL, {
       method: "POST",
       headers: {
@@ -91,15 +179,15 @@ export async function sendBulkStatusChangeToWebhook(
         event: "client_status_changed",
         timestamp: new Date().toISOString(),
         new_status: newStatus,
-        total_affected: affectedClients.length,
-        data: affectedClients.map(c => ({ ...c, status: newStatus })),
+        total_affected: enrichedClients.length,
+        data: enrichedClients,
       }),
     });
 
     if (!response.ok) {
       console.error("Bulk status webhook response not ok:", response.status, response.statusText);
     } else {
-      console.log("Bulk status change sent to webhook successfully");
+      console.log("Bulk status change sent to webhook successfully (with files)");
     }
   } catch (error) {
     console.error("Failed to send bulk status change to webhook:", error);
@@ -111,6 +199,11 @@ export async function sendBulkStatusChangeToWebhook(
  */
 export async function sendAllClientsToWebhook(clients: ClientExportData[]): Promise<{ success: boolean; message: string }> {
   try {
+    // Enrich all clients with file contents
+    const enrichedClients = await Promise.all(
+      clients.map(c => enrichClientWithFiles(c))
+    );
+
     const response = await fetch(EXPORT_WEBHOOK_URL, {
       method: "POST",
       headers: {
@@ -119,8 +212,8 @@ export async function sendAllClientsToWebhook(clients: ClientExportData[]): Prom
       body: JSON.stringify({
         event: "clients_full_export",
         timestamp: new Date().toISOString(),
-        total_clients: clients.length,
-        data: clients,
+        total_clients: enrichedClients.length,
+        data: enrichedClients,
       }),
     });
 
@@ -132,10 +225,10 @@ export async function sendAllClientsToWebhook(clients: ClientExportData[]): Prom
       };
     }
     
-    console.log("All clients data sent to export webhook successfully");
+    console.log("All clients data sent to export webhook successfully (with files)");
     return { 
       success: true, 
-      message: `${clients.length} cliente(s) enviado(s) com sucesso!` 
+      message: `${enrichedClients.length} cliente(s) enviado(s) com sucesso!` 
     };
   } catch (error) {
     console.error("Failed to send clients to export webhook:", error);
