@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { exportAllClientsAsCSV } from "@/lib/clients-csv-export";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { 
@@ -295,34 +296,13 @@ export const ClientTable = ({
     }
   };
 
-  const exportToCSV = () => {
-    const headers = ["Nome", "CPF", "Email", "Telefone", "Área", "Cidade", "Status", "Data de Cadastro"];
-    const rows = filteredAndSortedClients.map(c => [
-      c.full_name,
-      c.cpf || "",
-      c.email,
-      c.phone || "",
-      c.area_of_interest || "",
-      c.region || "",
-      c.status,
-      format(new Date(c.created_at), "dd/MM/yyyy")
-    ]);
-    
-    const csvContent = [
-      headers.join(","),
-      ...rows.map(row => row.map(cell => `"${cell}"`).join(","))
-    ].join("\n");
-    
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `clientes-${format(new Date(), "yyyy-MM-dd")}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    window.URL.revokeObjectURL(url);
-    document.body.removeChild(a);
-    toast.success("Lista exportada com sucesso!");
+  const exportToCSV = async () => {
+    const result = await exportAllClientsAsCSV();
+    if (result.success) {
+      toast.success(result.message);
+    } else {
+      toast.error(result.message);
+    }
   };
 
   const openWhatsApp = (phone: string, name: string) => {
