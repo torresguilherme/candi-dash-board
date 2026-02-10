@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { LogOut, Menu, FileText, Zap, Loader2, Upload } from "lucide-react";
+import { LogOut, Menu, FileText, Zap, Loader2, Download } from "lucide-react";
 import logoWhite from "@/assets/logo-white.png";
 import { AuditLogsDialog } from "./AuditLogsDialog";
 import { sendBulkAttentionWebhook, getAttentionLevel } from "@/lib/attention-webhook";
-import { sendAllClientsToWebhook } from "@/lib/clients-export-webhook";
+import { exportAllClientsAsCSV } from "@/lib/clients-csv-export";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { differenceInDays } from "date-fns";
@@ -23,38 +23,12 @@ export const AdminHeader = ({ onSignOut, onToggleSidebar }: AdminHeaderProps) =>
   const handleExportAllClients = async () => {
     setSendingExport(true);
     try {
-      // Fetch all clients from database with all fields
-      const { data: clients, error } = await supabase
-        .from("clients")
-        .select("*");
-
-      if (error) {
-        throw error;
-      }
-
-      if (!clients || clients.length === 0) {
-        toast({
-          title: "Nenhum cliente encontrado",
-          description: "Não há clientes cadastrados para exportar.",
-        });
-        return;
-      }
-
-      // Send to webhook
-      const result = await sendAllClientsToWebhook(clients);
-      
-      if (result.success) {
-        toast({
-          title: "Exportação enviada com sucesso!",
-          description: result.message,
-        });
-      } else {
-        toast({
-          title: "Falha ao exportar",
-          description: result.message,
-          variant: "destructive",
-        });
-      }
+      const result = await exportAllClientsAsCSV();
+      toast({
+        title: result.success ? "Exportação concluída!" : "Falha ao exportar",
+        description: result.message,
+        variant: result.success ? "default" : "destructive",
+      });
     } catch (error) {
       console.error("Error exporting clients:", error);
       toast({
@@ -161,7 +135,7 @@ export const AdminHeader = ({ onSignOut, onToggleSidebar }: AdminHeaderProps) =>
                 {sendingExport ? (
                   <Loader2 className="h-4 w-4 animate-spin sm:mr-2" />
                 ) : (
-                  <Upload className="h-4 w-4 sm:mr-2" />
+                  <Download className="h-4 w-4 sm:mr-2" />
                 )}
                 <span className="hidden sm:inline">Exportar Clientes</span>
               </Button>
