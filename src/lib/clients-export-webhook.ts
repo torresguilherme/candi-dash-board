@@ -195,14 +195,57 @@ export async function sendBulkStatusChangeToWebhook(
 }
 
 /**
- * Sends all clients data to the export webhook
+ * Fetches all related data for a list of clients
+ */
+async function fetchAllRelatedData(clientIds: string[]) {
+  const [services, interactions, documents, meetings] = await Promise.all([
+    supabase.from("client_services").select("*").in("client_id", clientIds),
+    supabase.from("client_interactions").select("*").in("client_id", clientIds),
+    supabase.from("client_documents").select("*").in("client_id", clientIds),
+    supabase.from("candidate_meetings").select("*").in("candidate_id", clientIds),
+  ]);
+
+  // Fetch service_dates for all services
+  const serviceIds = (services.data || []).map(s => s.id);
+  const serviceDates = serviceIds.length > 0
+    ? await supabase.from("service_dates").select("*").in("service_id", serviceIds)
+    : { data: [] };
+
+  return {
+    services: services.data || [],
+    interactions: interactions.data || [],
+    documents: documents.data || [],
+    meetings: meetings.data || [],
+    serviceDates: serviceDates.data || [],
+  };
+}
+
+/**
+ * Sends all clients data to the export webhook with all related records
  */
 export async function sendAllClientsToWebhook(clients: ClientExportData[]): Promise<{ success: boolean; message: string }> {
   try {
-    // Enrich all clients with file contents
-    const enrichedClients = await Promise.all(
-      clients.map(c => enrichClientWithFiles(c))
-    );
+    const clientIds = clients.map(c => c.id);
+
+    // Fetch all related data and enrich with files in parallel
+    const [relatedData, enrichedClients] = await Promise.all([
+      fetchAllRelatedData(clientIds),
+      Promise.all(clients.map(c => enrichClientWithFiles(c))),
+    ]);
+
+    // Attach related data to each client
+    const fullClients = enrichedClients.map(client => ({
+      ...client,
+      services: relatedData.services
+        .filter(s => s.client_id === client.id)
+        .map(service => ({
+          ...service,
+          dates: relatedData.serviceDates.filter(d => d.service_id === service.id),
+        })),
+      interactions: relatedData.interactions.filter(i => i.client_id === client.id),
+      documents: relatedData.documents.filter(d => d.client_id === client.id),
+      meetings: relatedData.meetings.filter(m => m.candidate_id === client.id),
+    }));
 
     const response = await fetch(EXPORT_WEBHOOK_URL, {
       method: "POST",
@@ -212,8 +255,8 @@ export async function sendAllClientsToWebhook(clients: ClientExportData[]): Prom
       body: JSON.stringify({
         event: "clients_full_export",
         timestamp: new Date().toISOString(),
-        total_clients: enrichedClients.length,
-        data: enrichedClients,
+        total_clients: fullClients.length,
+        data: fullClients,
       }),
     });
 
@@ -225,10 +268,10 @@ export async function sendAllClientsToWebhook(clients: ClientExportData[]): Prom
       };
     }
     
-    console.log("All clients data sent to export webhook successfully (with files)");
+    console.log("All clients data sent to export webhook successfully (with files and related data)");
     return { 
       success: true, 
-      message: `${enrichedClients.length} cliente(s) enviado(s) com sucesso!` 
+      message: `${fullClients.length} cliente(s) enviado(s) com sucesso!` 
     };
   } catch (error) {
     console.error("Failed to send clients to export webhook:", error);
