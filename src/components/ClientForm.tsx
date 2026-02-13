@@ -39,6 +39,8 @@ import {
   CalendarClock
 } from "lucide-react";
 import { ContractProgress, calculateEndDate, getDurationLabel } from "@/components/ContractProgress";
+import { ServiceDeliverables } from "@/components/ServiceDeliverables";
+import { getServiceLabel } from "@/hooks/useClientServices";
 
 const clientFormSchema = z.object({
   // Dados Pessoais
@@ -207,35 +209,52 @@ const ServiceCard = ({
 const ServiceDateFields = ({
   form,
   prefix,
+  clientId,
+  clientName,
+  clientEmail,
 }: {
   form: UseFormReturn<ClientFormData>;
   prefix: string;
+  clientId?: string;
+  clientName?: string;
+  clientEmail?: string;
 }) => (
-  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-3 border-t border-dashed">
-    <FormField
-      control={form.control}
-      name={`service_dates.${prefix}_scheduled` as any}
-      render={({ field }) => (
-        <FormItem>
-          <FormLabel className="text-sm text-muted-foreground">Data Prevista</FormLabel>
-          <FormControl>
-            <Input type="date" {...field} value={field.value || ""} />
-          </FormControl>
-        </FormItem>
-      )}
-    />
-    <FormField
-      control={form.control}
-      name={`service_dates.${prefix}_delivered` as any}
-      render={({ field }) => (
-        <FormItem>
-          <FormLabel className="text-sm text-muted-foreground">Data de Entrega</FormLabel>
-          <FormControl>
-            <Input type="date" {...field} value={field.value || ""} />
-          </FormControl>
-        </FormItem>
-      )}
-    />
+  <div className="space-y-0">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-3 border-t border-dashed">
+      <FormField
+        control={form.control}
+        name={`service_dates.${prefix}_scheduled` as any}
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel className="text-sm text-muted-foreground">Data Prevista</FormLabel>
+            <FormControl>
+              <Input type="date" {...field} value={field.value || ""} />
+            </FormControl>
+          </FormItem>
+        )}
+      />
+      <FormField
+        control={form.control}
+        name={`service_dates.${prefix}_delivered` as any}
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel className="text-sm text-muted-foreground">Data de Entrega</FormLabel>
+            <FormControl>
+              <Input type="date" {...field} value={field.value || ""} />
+            </FormControl>
+          </FormItem>
+        )}
+      />
+    </div>
+    {clientId && (
+      <ServiceDeliverables
+        clientId={clientId}
+        serviceType={prefix}
+        clientName={clientName || ""}
+        clientEmail={clientEmail || ""}
+        serviceLabel={getServiceLabel(prefix)}
+      />
+    )}
   </div>
 );
 
@@ -941,6 +960,15 @@ export const ClientForm = ({
                         </FormItem>
                       )}
                     />
+                    {clientId && (
+                      <ServiceDeliverables
+                        clientId={clientId}
+                        serviceType="career_mentoring"
+                        clientName={form.getValues("full_name") || ""}
+                        clientEmail={form.getValues("email") || ""}
+                        serviceLabel={getServiceLabel("career_mentoring")}
+                      />
+                    )}
                   </div>
                 )}
               </ServiceCard>
@@ -952,7 +980,7 @@ export const ClientForm = ({
                 label="Mapeamento de Mercado"
               >
                 {watchServices?.market_mapping && (
-                  <ServiceDateFields form={form} prefix="market_mapping" />
+                  <ServiceDateFields form={form} prefix="market_mapping" clientId={clientId} clientName={form.getValues("full_name")} clientEmail={form.getValues("email")} />
                 )}
               </ServiceCard>
 
@@ -963,7 +991,7 @@ export const ClientForm = ({
                 label="Material de Apoio"
               >
                 {watchServices?.support_material && (
-                  <ServiceDateFields form={form} prefix="support_material" />
+                  <ServiceDateFields form={form} prefix="support_material" clientId={clientId} clientName={form.getValues("full_name")} clientEmail={form.getValues("email")} />
                 )}
               </ServiceCard>
 
@@ -974,7 +1002,7 @@ export const ClientForm = ({
                 label="Pitch de Entrevista"
               >
                 {watchServices?.interview_pitch && (
-                  <ServiceDateFields form={form} prefix="interview_pitch" />
+                  <ServiceDateFields form={form} prefix="interview_pitch" clientId={clientId} clientName={form.getValues("full_name")} clientEmail={form.getValues("email")} />
                 )}
               </ServiceCard>
 
@@ -985,7 +1013,7 @@ export const ClientForm = ({
                 label="Reestruturação Curricular"
               >
                 {watchServices?.resume_restructuring && (
-                  <ServiceDateFields form={form} prefix="resume_restructuring" />
+                  <ServiceDateFields form={form} prefix="resume_restructuring" clientId={clientId} clientName={form.getValues("full_name")} clientEmail={form.getValues("email")} />
                 )}
               </ServiceCard>
 
@@ -996,7 +1024,7 @@ export const ClientForm = ({
                 label="Avaliação de Perfil Comportamental"
               >
                 {watchServices?.behavioral_assessment && (
-                  <ServiceDateFields form={form} prefix="behavioral_assessment" />
+                  <ServiceDateFields form={form} prefix="behavioral_assessment" clientId={clientId} clientName={form.getValues("full_name")} clientEmail={form.getValues("email")} />
                 )}
               </ServiceCard>
 
@@ -1007,7 +1035,7 @@ export const ClientForm = ({
                 label="Avaliação Preferência Cerebral"
               >
                 {watchServices?.brain_preference && (
-                  <ServiceDateFields form={form} prefix="brain_preference" />
+                  <ServiceDateFields form={form} prefix="brain_preference" clientId={clientId} clientName={form.getValues("full_name")} clientEmail={form.getValues("email")} />
                 )}
               </ServiceCard>
 
@@ -1067,6 +1095,15 @@ export const ClientForm = ({
                         )}
                       />
                     </div>
+                    {clientId && (
+                      <ServiceDeliverables
+                        clientId={clientId}
+                        serviceType="company_referral"
+                        clientName={form.getValues("full_name") || ""}
+                        clientEmail={form.getValues("email") || ""}
+                        serviceLabel={getServiceLabel("company_referral")}
+                      />
+                    )}
                   </div>
                 )}
               </ServiceCard>
@@ -1078,7 +1115,7 @@ export const ClientForm = ({
                 label="LinkedIn"
               >
                 {watchServices?.linkedin_service && (
-                  <ServiceDateFields form={form} prefix="linkedin_service" />
+                  <ServiceDateFields form={form} prefix="linkedin_service" clientId={clientId} clientName={form.getValues("full_name")} clientEmail={form.getValues("email")} />
                 )}
               </ServiceCard>
 
@@ -1089,7 +1126,7 @@ export const ClientForm = ({
                 label="Marketing Pessoal"
               >
                 {watchServices?.personal_marketing && (
-                  <ServiceDateFields form={form} prefix="personal_marketing" />
+                  <ServiceDateFields form={form} prefix="personal_marketing" clientId={clientId} clientName={form.getValues("full_name")} clientEmail={form.getValues("email")} />
                 )}
               </ServiceCard>
             </div>
@@ -1127,6 +1164,7 @@ export const ClientForm = ({
                   )}
                 />
                 {watchCourses?.cnv && (
+                  <>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pl-7">
                     <FormField
                       control={form.control}
@@ -1165,6 +1203,16 @@ export const ClientForm = ({
                       )}
                     />
                   </div>
+                  {clientId && (
+                    <ServiceDeliverables
+                      clientId={clientId}
+                      serviceType="cnv"
+                      clientName={form.getValues("full_name") || ""}
+                      clientEmail={form.getValues("email") || ""}
+                      serviceLabel={getServiceLabel("cnv")}
+                    />
+                  )}
+                  </>
                 )}
               </div>
 
@@ -1187,6 +1235,7 @@ export const ClientForm = ({
                   )}
                 />
                 {watchCourses?.persona_in_foco && (
+                  <>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pl-7">
                     <FormField
                       control={form.control}
@@ -1225,6 +1274,16 @@ export const ClientForm = ({
                       )}
                     />
                   </div>
+                  {clientId && (
+                    <ServiceDeliverables
+                      clientId={clientId}
+                      serviceType="persona_in_foco"
+                      clientName={form.getValues("full_name") || ""}
+                      clientEmail={form.getValues("email") || ""}
+                      serviceLabel={getServiceLabel("persona_in_foco")}
+                    />
+                  )}
+                  </>
                 )}
               </div>
 
@@ -1247,6 +1306,7 @@ export const ClientForm = ({
                   )}
                 />
                 {watchCourses?.pnl_practitioner && (
+                  <>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pl-7">
                     <FormField
                       control={form.control}
@@ -1285,6 +1345,16 @@ export const ClientForm = ({
                       )}
                     />
                   </div>
+                  {clientId && (
+                    <ServiceDeliverables
+                      clientId={clientId}
+                      serviceType="pnl_practitioner"
+                      clientName={form.getValues("full_name") || ""}
+                      clientEmail={form.getValues("email") || ""}
+                      serviceLabel={getServiceLabel("pnl_practitioner")}
+                    />
+                  )}
+                  </>
                 )}
               </div>
             </div>
