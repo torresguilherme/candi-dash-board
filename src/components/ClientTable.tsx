@@ -64,6 +64,9 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/u
 import { CandidateFolderDialog } from "./CandidateFolderDialog";
 import { CandidateAvatar } from "./admin/CandidateAvatar";
 import { ClientForm, ClientFormData } from "./ClientForm";
+import { InteractionHistory } from "./admin/InteractionHistory";
+import { InteractionLogDialog } from "./admin/InteractionLogDialog";
+import { Plus } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -136,6 +139,8 @@ export const ClientTable = ({
   const [viewingClient, setViewingClient] = useState<Client | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [folderClient, setFolderClient] = useState<Client | null>(null);
+  const [loggingClient, setLoggingClient] = useState<Client | null>(null);
+  const [interactionRefresh, setInteractionRefresh] = useState(0);
   const itemsPerPage = 10;
 
   const uniqueAreas = useMemo(() => {
@@ -868,14 +873,43 @@ export const ClientTable = ({
                 </div>
               </div>
 
-              <div className="flex flex-wrap gap-2 pt-4 border-t">
+              {/* Histórico de Interações */}
+              <div className="space-y-3 pt-4 border-t">
+                <h4 className="font-medium text-sm text-muted-foreground flex items-center gap-2">
+                  <MessageCircle className="h-4 w-4" /> Histórico de Interações
+                </h4>
+                <InteractionHistory clientId={viewingClient.id} refreshTrigger={interactionRefresh} />
+              </div>
+
+              <div className="flex gap-2 pt-4 border-t">
+                <Button
+                  className="flex-1"
+                  onClick={() => setLoggingClient(viewingClient)}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Registrar Interação
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setFolderClient(viewingClient);
+                    setViewingClient(null);
+                  }}
+                  className="flex-1"
+                >
+                  <FolderOpen className="h-4 w-4 mr-2" />
+                  Ver Pasta
+                </Button>
+              </div>
+
+              <div className="flex gap-2">
                 {viewingClient.phone && (
-                  <Button variant="outline" onClick={() => openWhatsApp(viewingClient.phone!, viewingClient.full_name)}>
+                  <Button variant="outline" className="flex-1" onClick={() => openWhatsApp(viewingClient.phone!, viewingClient.full_name)}>
                     <MessageCircle className="h-4 w-4 mr-2 text-green-600" />
                     WhatsApp
                   </Button>
                 )}
-                <Button variant="outline" onClick={() => openEmail(viewingClient.email, viewingClient.full_name)}>
+                <Button variant="outline" className="flex-1" onClick={() => openEmail(viewingClient.email, viewingClient.full_name)}>
                   <Mail className="h-4 w-4 mr-2 text-blue-600" />
                   E-mail
                 </Button>
@@ -893,18 +927,7 @@ export const ClientTable = ({
                 )}
               </div>
 
-              <div className="flex gap-2 pt-4 border-t">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setFolderClient(viewingClient);
-                    setViewingClient(null);
-                  }}
-                  className="flex-1"
-                >
-                  <FolderOpen className="h-4 w-4 mr-2" />
-                  Ver Pasta
-                </Button>
+              <div className="flex gap-2">
                 <Button
                   variant="default"
                   onClick={() => {
@@ -980,6 +1003,17 @@ export const ClientTable = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Interaction Log Dialog */}
+      {loggingClient && (
+        <InteractionLogDialog
+          open={!!loggingClient}
+          onOpenChange={() => setLoggingClient(null)}
+          clientId={loggingClient.id}
+          clientName={loggingClient.full_name}
+          onSuccess={() => setInteractionRefresh((r) => r + 1)}
+        />
+      )}
     </TooltipProvider>
   );
 };
