@@ -148,6 +148,7 @@ export const CRMClientTable = ({
   const [folderClient, setFolderClient] = useState<CRMClient | null>(null);
   const [loggingClient, setLoggingClient] = useState<CRMClient | null>(null);
   const [emailClient, setEmailClient] = useState<CRMClient | null>(null);
+  const [interactionRefresh, setInteractionRefresh] = useState(0);
   const [isEditFormDirty, setIsEditFormDirty] = useState(false);
   const [showEditUnsavedWarning, setShowEditUnsavedWarning] = useState(false);
   const itemsPerPage = 10;
@@ -971,7 +972,7 @@ export const CRMClientTable = ({
                 <h4 className="font-medium text-sm text-muted-foreground flex items-center gap-2">
                   <MessageCircle className="h-4 w-4" /> Histórico de Interações
                 </h4>
-                <InteractionHistory clientId={viewingClient.id} />
+                <InteractionHistory clientId={viewingClient.id} refreshTrigger={interactionRefresh} />
               </div>
 
               {/* Observações */}
@@ -1132,7 +1133,7 @@ export const CRMClientTable = ({
           onOpenChange={() => setLoggingClient(null)}
           clientId={loggingClient.id}
           clientName={loggingClient.full_name}
-          onSuccess={onRefresh}
+          onSuccess={() => { setInteractionRefresh(r => r + 1); onRefresh(); }}
         />
       )}
 
