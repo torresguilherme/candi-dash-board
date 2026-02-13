@@ -119,6 +119,8 @@ export type Database = {
       }
       client_interactions: {
         Row: {
+          attachment_name: string | null
+          attachment_url: string | null
           client_id: string
           created_at: string
           created_by: string | null
@@ -127,6 +129,8 @@ export type Database = {
           notes: string | null
         }
         Insert: {
+          attachment_name?: string | null
+          attachment_url?: string | null
           client_id: string
           created_at?: string
           created_by?: string | null
@@ -135,6 +139,8 @@ export type Database = {
           notes?: string | null
         }
         Update: {
+          attachment_name?: string | null
+          attachment_url?: string | null
           client_id?: string
           created_at?: string
           created_by?: string | null
