@@ -2,8 +2,9 @@ import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
-import { Phone, Mail, MessageCircle, Calendar, FileText, Users, Loader2, History } from "lucide-react";
+import { Phone, Mail, MessageCircle, Calendar, FileText, Users, Loader2, History, ChevronDown, ChevronUp } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button";
 
 interface Interaction {
   id: string;
@@ -29,6 +30,7 @@ const interactionTypeConfig: Record<string, { label: string; icon: typeof Phone;
 export const InteractionHistory = ({ clientId, refreshTrigger }: InteractionHistoryProps) => {
   const [interactions, setInteractions] = useState<Interaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const fetchInteractions = async () => {
@@ -39,7 +41,7 @@ export const InteractionHistory = ({ clientId, refreshTrigger }: InteractionHist
           .select("id, interaction_type, notes, created_at")
           .eq("client_id", clientId)
           .order("created_at", { ascending: false })
-          .limit(20);
+          .limit(50);
 
         if (error) throw error;
         setInteractions(data || []);
@@ -52,6 +54,15 @@ export const InteractionHistory = ({ clientId, refreshTrigger }: InteractionHist
 
     fetchInteractions();
   }, [clientId, refreshTrigger]);
+
+  const toggleExpand = (id: string) => {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   if (isLoading) {
     return (
@@ -71,36 +82,61 @@ export const InteractionHistory = ({ clientId, refreshTrigger }: InteractionHist
   }
 
   return (
-    <ScrollArea className="h-[200px] pr-3">
-      <div className="space-y-3">
-        {interactions.map((interaction) => {
-          const config = interactionTypeConfig[interaction.interaction_type] || interactionTypeConfig.other;
-          const Icon = config.icon;
+    <ScrollArea className="h-[400px] pr-3">
+      <div className="relative">
+        {/* Timeline line */}
+        <div className="absolute left-[19px] top-0 bottom-0 w-0.5 bg-border" />
 
-          return (
-            <div
-              key={interaction.id}
-              className="flex items-start gap-3 p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
-            >
-              <div className={`p-2 rounded-full ${config.color}`}>
-                <Icon className="h-4 w-4" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="font-medium text-sm">{config.label}</span>
-                  <span className="text-xs text-muted-foreground whitespace-nowrap">
-                    {format(new Date(interaction.created_at), "dd/MM/yy 'às' HH:mm", { locale: ptBR })}
-                  </span>
+        <div className="space-y-1">
+          {interactions.map((interaction) => {
+            const config = interactionTypeConfig[interaction.interaction_type] || interactionTypeConfig.other;
+            const Icon = config.icon;
+            const isExpanded = expandedIds.has(interaction.id);
+            const hasLongNotes = interaction.notes && interaction.notes.length > 80;
+
+            return (
+              <div
+                key={interaction.id}
+                className="relative flex items-start gap-3 pl-1"
+              >
+                {/* Timeline dot */}
+                <div className={`relative z-10 p-1.5 rounded-full shrink-0 ${config.color}`}>
+                  <Icon className="h-3.5 w-3.5" />
                 </div>
-                {interaction.notes && (
-                  <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                    {interaction.notes}
-                  </p>
-                )}
+
+                <div className="flex-1 min-w-0 pb-4">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-medium text-sm">{config.label}</span>
+                    <span className="text-xs text-muted-foreground whitespace-nowrap">
+                      {format(new Date(interaction.created_at), "dd/MM/yy 'às' HH:mm", { locale: ptBR })}
+                    </span>
+                  </div>
+                  {interaction.notes && (
+                    <div className="mt-1">
+                      <p className={`text-sm text-muted-foreground whitespace-pre-wrap ${!isExpanded && hasLongNotes ? "line-clamp-2" : ""}`}>
+                        {interaction.notes}
+                      </p>
+                      {hasLongNotes && (
+                        <Button
+                          variant="link"
+                          size="sm"
+                          className="h-auto p-0 text-xs text-primary"
+                          onClick={() => toggleExpand(interaction.id)}
+                        >
+                          {isExpanded ? (
+                            <><ChevronUp className="h-3 w-3 mr-1" /> Ver menos</>
+                          ) : (
+                            <><ChevronDown className="h-3 w-3 mr-1" /> Ver mais</>
+                          )}
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
     </ScrollArea>
   );
