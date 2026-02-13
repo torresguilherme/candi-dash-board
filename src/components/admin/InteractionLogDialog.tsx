@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -20,7 +20,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Phone, Mail, MessageCircle, Calendar, FileText, Users, Loader2, UserCheck } from "lucide-react";
+import { Phone, Mail, MessageCircle, Calendar, FileText, Users, Loader2, UserCheck, Paperclip, X } from "lucide-react";
 
 interface TeamMember {
   id: string;
@@ -58,9 +58,10 @@ export const InteractionLogDialog = ({
   const [nextStepAssignedTo, setNextStepAssignedTo] = useState("");
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [attachment, setAttachment] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
-  // Fetch team members (admins and editors) when dialog opens
   useEffect(() => {
     if (open) {
       fetchTeamMembers();
@@ -69,7 +70,6 @@ export const InteractionLogDialog = ({
 
   const fetchTeamMembers = async () => {
     try {
-      // Get all user IDs with admin or editor roles
       const { data: roleData, error: roleError } = await supabase
         .from("user_roles")
         .select("user_id")
@@ -80,14 +80,12 @@ export const InteractionLogDialog = ({
       if (roleData && roleData.length > 0) {
         const userIds = roleData.map((r) => r.user_id);
         
-        // Get profiles for these users
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
           .select("id, email")
           .in("id", userIds);
 
         if (profileError) throw profileError;
-
         setTeamMembers(profileData || []);
       }
     } catch (error) {
@@ -106,18 +104,32 @@ export const InteractionLogDialog = ({
 
     setIsLoading(true);
     try {
-      // Insert interaction log
+      let attachmentUrl: string | null = null;
+      let attachmentName: string | null = null;
+
+      if (attachment) {
+        const filePath = `${clientId}/interactions/${Date.now()}_${attachment.name}`;
+        const { error: uploadError } = await supabase.storage
+          .from("candidate-documents")
+          .upload(filePath, attachment);
+
+        if (uploadError) throw uploadError;
+        attachmentUrl = filePath;
+        attachmentName = attachment.name;
+      }
+
       const { error: interactionError } = await supabase
         .from("client_interactions")
         .insert({
           client_id: clientId,
           interaction_type: interactionType,
           notes: notes || null,
+          attachment_url: attachmentUrl,
+          attachment_name: attachmentName,
         });
 
       if (interactionError) throw interactionError;
 
-      // Update client next_step if provided
       const updateData: Record<string, string | null> = {};
       if (nextStep) updateData.next_step = nextStep;
       if (nextStepDate) updateData.next_step_date = nextStepDate;
@@ -132,17 +144,14 @@ export const InteractionLogDialog = ({
         if (updateError) throw updateError;
       }
 
-      // Reset form and close dialog FIRST
       resetForm();
       onOpenChange(false);
       
-      // Show success toast
       toast({
         title: "Interação registrada!",
         description: "O cliente foi marcado como 'Quente' automaticamente.",
       });
 
-      // Refresh data AFTER dialog is closed to prevent blank screen
       setTimeout(() => {
         onSuccess();
       }, 100);
@@ -165,6 +174,8 @@ export const InteractionLogDialog = ({
     setNextStep("");
     setNextStepDate("");
     setNextStepAssignedTo("");
+    setAttachment(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   return (
@@ -210,6 +221,54 @@ export const InteractionLogDialog = ({
               onChange={(e) => setNotes(e.target.value)}
               rows={3}
             />
+          </div>
+
+          {/* Anexo de Arquivo */}
+          <div className="space-y-2">
+            <Label>Anexar Arquivo</Label>
+            {attachment ? (
+              <div className="flex items-center justify-between p-2 bg-muted rounded-md text-sm">
+                <div className="flex items-center gap-2 min-w-0 flex-1">
+                  <Paperclip className="h-4 w-4 text-muted-foreground shrink-0" />
+                  <span className="truncate">{attachment.name}</span>
+                  <span className="text-xs text-muted-foreground shrink-0">
+                    ({(attachment.size / 1024).toFixed(1)} KB)
+                  </span>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 w-6 p-0 shrink-0"
+                  onClick={() => {
+                    setAttachment(null);
+                    if (fileInputRef.current) fileInputRef.current.value = "";
+                  }}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              <div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.jpg,.jpeg,.png"
+                  onChange={(e) => setAttachment(e.target.files?.[0] || null)}
+                  className="hidden"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="gap-2"
+                >
+                  <Paperclip className="h-4 w-4" />
+                  Selecionar Arquivo
+                </Button>
+              </div>
+            )}
           </div>
 
           <div className="space-y-2">

@@ -2,15 +2,18 @@ import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
-import { Phone, Mail, MessageCircle, Calendar, FileText, Users, Loader2, History, ChevronDown, ChevronUp } from "lucide-react";
+import { Phone, Mail, MessageCircle, Calendar, FileText, Users, Loader2, History, ChevronDown, ChevronUp, Paperclip, Download } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 interface Interaction {
   id: string;
   interaction_type: string;
   notes: string | null;
   created_at: string;
+  attachment_url: string | null;
+  attachment_name: string | null;
 }
 
 interface InteractionHistoryProps {
@@ -38,7 +41,7 @@ export const InteractionHistory = ({ clientId, refreshTrigger }: InteractionHist
       try {
         const { data, error } = await supabase
           .from("client_interactions")
-          .select("id, interaction_type, notes, created_at")
+          .select("id, interaction_type, notes, created_at, attachment_url, attachment_name")
           .eq("client_id", clientId)
           .order("created_at", { ascending: false })
           .limit(50);
@@ -62,6 +65,28 @@ export const InteractionHistory = ({ clientId, refreshTrigger }: InteractionHist
       else next.add(id);
       return next;
     });
+  };
+
+  const handleDownloadAttachment = async (attachmentUrl: string, attachmentName: string) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from("candidate-documents")
+        .createSignedUrl(attachmentUrl, 300);
+
+      if (error) throw error;
+
+      const response = await fetch(data.signedUrl);
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = attachmentName;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Download error:", error);
+      toast.error("Erro ao baixar arquivo");
+    }
   };
 
   if (isLoading) {
@@ -131,6 +156,17 @@ export const InteractionHistory = ({ clientId, refreshTrigger }: InteractionHist
                         </Button>
                       )}
                     </div>
+                  )}
+                  {/* Attachment indicator */}
+                  {interaction.attachment_url && interaction.attachment_name && (
+                    <button
+                      onClick={() => handleDownloadAttachment(interaction.attachment_url!, interaction.attachment_name!)}
+                      className="mt-1.5 flex items-center gap-1.5 px-2 py-1 rounded bg-muted hover:bg-muted/80 transition-colors text-xs group cursor-pointer border-0"
+                    >
+                      <Paperclip className="h-3 w-3 text-muted-foreground" />
+                      <span className="truncate max-w-[180px] text-foreground">{interaction.attachment_name}</span>
+                      <Download className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </button>
                   )}
                 </div>
               </div>
