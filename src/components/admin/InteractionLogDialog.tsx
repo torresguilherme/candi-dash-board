@@ -130,7 +130,11 @@ export const InteractionLogDialog = ({
 
       if (interactionError) throw interactionError;
 
-      const updateData: Record<string, string | null> = {};
+      const updateData: {
+        next_step?: string;
+        next_step_date?: string;
+        next_step_assigned_to?: string;
+      } = {};
       if (nextStep) updateData.next_step = nextStep;
       if (nextStepDate) updateData.next_step_date = nextStepDate;
       if (nextStepAssignedTo) updateData.next_step_assigned_to = nextStepAssignedTo;
